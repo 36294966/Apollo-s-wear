@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    
+    <!-- Search Engine Optimization Tags -->
+    <title>SirApolloMenWear | Premium Men's Clothing & Suits</title>
+    <meta name="description" content="Welcome to Sir Apollo Men-Wear and experience Amazing offers on premium quality suits and men's clothing">
+    <meta name="keywords" content="Sir Apollo, men's wear, suits, formal wear, men's clothing, sirapollo.com, premium suits">
+    <meta name="author" content="Sir Apollo Men's Wear">
+    
+    <!-- Open Graph Tags for Social Media -->
+    <meta property="og:title" content="SirApolloMenWear | Premium Men's Clothing & Suits">
+    <meta property="og:description" content="Welcome to Sir Apollo Men-Wear and experience Amazing offers on premium quality suits and men's clothing">
+    <meta property="og:url" content="https://sirapollo.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="logo.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="Sir Apollo Men's Wear" />
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Structured Data for Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ClothingStore",
+      "name": "SirApolloMenWear",
+      "url": "https://sirapollo.com",
+      "description": "Welcome to Sir Apollo Men-Wear and experience Amazing offers on premium quality suits and men's clothing",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "123 Fashion Avenue",
+        "addressLocality": "New York",
+        "addressRegion": "NY",
+        "postalCode": "10001",
+        "addressCountry": "USA"
+      },
+      "openingHours": "Mo-Fr 10:00-20:00, Sa 10:00-18:00, Su 12:00-17:00"
+    }
+    </script>
+    
+    <style>
+      /* Reset default margins and padding */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      /* Ensure html and body take full height */
+      html, body {
+        height: 100%;
+        width: 100%;
+        overflow-x: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      
+      /* Loading styles - will be replaced by React app */
+      #root {
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      }
+      
+      .loading-container {
+        text-align: center;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      
+      .logo-container {
+        margin-bottom: 40px;
+      }
+      
+      .circular-logo {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #ecf0f1;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+        100% { transform: scale(1); }
+      }
+      
+      .loading-spinner {
+        border: 5px solid rgba(255, 255, 255, 0.1);
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 25px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        font-size: 2rem;
+        color: #ecf0f1;
+        margin-top: 25px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+      }
+      
+      .progress-text {
+        margin-top: 25px;
+        color: #bdc3c7;
+        font-size: 1.1rem;
+        max-width: 500px;
+        line-height: 1.6;
+      }
+      
+      /* Styles for noscript content */
+      .noscript-content {
+        text-align: center;
+        padding: 50px;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        color: #ecf0f1;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      .noscript-logo {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #ecf0f1;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        margin-bottom: 30px;
+      }
+      
+      .noscript-title {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #ffffff;
+      }
+      
+      .noscript-text {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        max-width: 600px;
+        line-height: 1.6;
+      }
+      
+      .website-link {
+        display: inline-block;
+        padding: 12px 30px;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 30px;
+        font-weight: 600;
+        margin-top: 20px;
+        transition: background-color 0.3s ease;
+      }
+      
+      .website-link:hover {
+        background-color: #2980b9;
+      }
+      
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .circular-logo, .noscript-logo {
+          width: 140px;
+          height: 140px;
+        }
+        
+        .loading-spinner {
+          width: 60px;
+          height: 60px;
+        }
+        
+        .loading-text, .noscript-title {
+          font-size: 1.7rem;
+        }
+        
+        .noscript-text {
+          font-size: 1.1rem;
+        }
+        
+        .progress-text {
+          padding: 0 15px;
+        }
+      }
+      
+      @media (max-width: 480px) {
+        .circular-logo, .noscript-logo {
+          width: 120px;
+          height: 120px;
+        }
+        
+        .loading-spinner {
+          width: 50px;
+          height: 50px;
+        }
+        
+        .loading-text, .noscript-title {
+          font-size: 1.5rem;
+        }
+        
+        .noscript-text {
+          font-size: 1rem;
+          padding: 0 15px;
+        }
+        
+        .noscript-content {
+          padding: 30px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript-content">
+        <div class="logo-container">
+          <img src="logo.jpg" alt="Sir Apollo Men's Wear - Premium Quality Suits and Men's Clothing" class="noscript-logo">
+        </div>
+        <h1 class="noscript-title">Sir Apollo Men's Wear</h1>
+        <p class="noscript-text">Welcome to Sir Apollo Men's Wear - your destination for premium quality suits and men's clothing.</p>
+        <p class="noscript-text">Experience amazing offers on formal wear, custom suits, and accessories.</p>
+        <a href="https://sirapollo.com" class="website-link">Visit sirapollo.com</a>
+      </div>
+    </noscript>
+    <div id="root">
+      <div class="loading-container">
+        <div class="logo-container">
+          <img src="logo.jpg" alt="Sir Apollo Men's Wear - Premium Quality Suits and Men's Clothing" class="circular-logo">
+        </div>
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Loading Sir Apollo Men's Wear</p>
+        <p class="progress-text">Welcome to Sir Apollo Men's Wear - preparing your premium shopping experience...</p>
+      </div>
+    </div>
+
+    <script>
+      // Simple script to show loading progress
+      document.addEventListener('DOMContentLoaded', function() {
+        const progressText = document.querySelector('.progress-text');
+        const messages = [
+          "Curating our premium suit collection...",
+          "Preparing exclusive offers for you...",
+          "Finalizing your personalized experience...",
+          "Almost ready to showcase luxury menswear..."
+        ];
+        
+        let currentMessage = 0;
+        
+        // Change message every second
+        const interval = setInterval(function() {
+          if (currentMessage < messages.length) {
+            progressText.textContent = messages[currentMessage];
+            currentMessage++;
+          } else {
+            clearInterval(interval);
+          }
+        }, 1000);
+      });
+      
+      // Function to create a circular version of the logo for the browser tab
+      function createCircularFavicon() {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const size = 64;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          
+          // Create circular clipping path
+          ctx.beginPath();
+          ctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          
+          // Draw the image
+          ctx.drawImage(img, 0, 0, size, size);
+          
+          // Replace the favicon
+          const link = document.querySelector("link[rel*='icon']");
+          if (link) {
+            link.href = canvas.toDataURL('image/png');
+          }
+        };
+        img.onerror = function() {
+          console.log("Could not load logo image for favicon");
+        };
+        img.src = 'logo.jpg';
+      }
+      
+      // Create circular favicon when page loads
+      document.addEventListener('DOMContentLoaded', createCircularFavicon);
+    </script>
+  </body>
+</html>
