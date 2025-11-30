@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle, CreditCard, Home, Mail, MapPin, ShoppingBag, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Home, Mail, MapPin, ShoppingBag, User, ExternalLink, Download } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -145,6 +145,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const topRef = useRef(null);
   const orderSummaryRef = useRef(null);
+  const formRef = useRef(null);
   
   // Get purchase data from navigation state
   const purchaseItemFromState = location.state?.purchaseItem || null;
@@ -191,12 +192,37 @@ const Checkout = () => {
   // WhatsApp number for receipt
   const whatsappNumber = '+254746311274';
 
-  // Generate unique user ID
-  const generateUserId = () => {
-    return `USER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Generate user ID based on purchased items and timestamp
+  const generateUserId = (items) => {
+    const now = new Date();
+    const timestamp = now.getTime().toString(36).toUpperCase();
+    const dateCode = `${now.getDate()}${now.getMonth() + 1}${now.getFullYear().toString().slice(-2)}`;
+    
+    if (items.length === 1) {
+      // Single item - use product ID and timestamp
+      const productId = items[0].id || items[0].productId || '001';
+      return `U${productId}-${dateCode}-${timestamp.slice(-4)}`;
+    } else {
+      // Multiple items - use first product ID and count
+      const firstProductId = items[0].id || items[0].productId || '001';
+      const itemCount = items.length;
+      return `U${firstProductId}-${itemCount}ITM-${dateCode}-${timestamp.slice(-4)}`;
+    }
   };
 
-  const [userId] = useState(generateUserId());
+  // Generate order ID based on product IDs
+  const generateOrderId = (items) => {
+    if (items.length === 1) {
+      // For single item, use product ID directly
+      const productId = items[0].id || items[0].productId || '001';
+      return `ORD-${productId}`;
+    } else {
+      // For multiple items, create combination of first 3 product IDs
+      const productIds = items.map(item => item.id || item.productId || '001').slice(0, 3).join('-');
+      const timestamp = Date.now().toString(36).toUpperCase();
+      return `ORD-${productIds}-${timestamp}`;
+    }
+  };
 
   // Get base URL for item links
   const getBaseUrl = () => {
@@ -205,25 +231,54 @@ const Checkout = () => {
 
   // Generate proper product link using product ID
   const generateItemLink = (item) => {
-    if (!item || !item.id) return `${getBaseUrl()}/`;
+    const productId = item.id || item.productId;
+    if (!productId) return `${getBaseUrl()}/`;
     
-    // Use the product ID to create the link in the format: http://localhost:3000/product/3
-    return `${getBaseUrl()}/product/${item.id}`;
+    return `${getBaseUrl()}/product/${productId}`;
+  };
+
+  // Generate order link that points to the main product
+  const generateOrderLink = (orderDetailsObj) => {
+    if (orderDetailsObj.items.length === 1) {
+      // Single product order - link directly to that product
+      const productId = orderDetailsObj.items[0].id || orderDetailsObj.items[0].productId;
+      return `${getBaseUrl()}/product/${productId}`;
+    } else {
+      // Multiple products - link to first product or products page
+      const firstProductId = orderDetailsObj.items[0].id || orderDetailsObj.items[0].productId;
+      return `${getBaseUrl()}/product/${firstProductId}`;
+    }
+  };
+
+  // Enhanced smooth scroll function
+  const smoothScrollTo = (element, offset = 0) => {
+    if (!element) return;
+    
+    const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+    const offsetPosition = elementPosition - offset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
   };
 
   // Scroll to top function
   const scrollToTop = () => {
-    if (topRef.current) {
-      topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    smoothScrollTo(topRef.current, 80);
   };
 
   // Scroll to order summary on mobile
   const scrollToOrderSummary = () => {
     if (window.innerWidth < 1024 && orderSummaryRef.current) {
-      orderSummaryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      smoothScrollTo(orderSummaryRef.current, 100);
+    }
+  };
+
+  // Scroll to form section
+  const scrollToForm = () => {
+    if (formRef.current) {
+      smoothScrollTo(formRef.current, 100);
     }
   };
 
@@ -236,17 +291,276 @@ const Checkout = () => {
     }, 0);
   };
 
+  // Clear cart function - Enhanced to remove only the purchased items
+  const clearPurchasedItemsFromCart = (purchasedItems) => {
+    console.log('Clearing purchased items from cart...');
+    
+    // Get current cart from localStorage
+    const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    
+    if (currentCart.length === 0) {
+      console.log('Cart is already empty');
+      return;
+    }
+    
+    // Create a map of purchased items for quick lookup
+    const purchasedItemsMap = new Map();
+    purchasedItems.forEach(item => {
+      const productId = item.id || item.productId;
+      const key = `${productId}-${item.size || 'default'}`;
+      purchasedItemsMap.set(key, item.quantity || 1);
+    });
+    
+    // Filter out the purchased items from the cart
+    const updatedCart = currentCart.filter(cartItem => {
+      const cartProductId = cartItem.id || cartItem.productId;
+      const cartKey = `${cartProductId}-${cartItem.size || 'default'}`;
+      
+      // If this item is in the purchased items, remove it
+      if (purchasedItemsMap.has(cartKey)) {
+        console.log(`Removing item from cart: ${cartItem.name}, Size: ${cartItem.size}`);
+        return false; // Remove from cart
+      }
+      
+      return true; // Keep in cart
+    });
+    
+    // Update localStorage with the filtered cart
+    if (updatedCart.length > 0) {
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      console.log(`Cart updated. ${updatedCart.length} items remaining in cart.`);
+    } else {
+      localStorage.removeItem('cart');
+      console.log('Cart is now empty');
+    }
+    
+    // Dispatch events to update navbar and other components
+    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event('storage'));
+    
+    // Force a storage event for other tabs
+    localStorage.setItem('cart_trigger', Date.now().toString());
+    localStorage.removeItem('cart_trigger');
+    
+    console.log('Purchased items removed from cart and events dispatched');
+  };
+
+  // Clear entire cart function (for when all items are purchased)
+  const clearEntireCart = () => {
+    console.log('Clearing entire cart...');
+    localStorage.removeItem('cart');
+    
+    // Dispatch multiple events to ensure navbar gets the update
+    window.dispatchEvent(new Event('cartCleared'));
+    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event('storage'));
+    
+    // Force a storage event for other tabs
+    localStorage.setItem('cart_trigger', Date.now().toString());
+    localStorage.removeItem('cart_trigger');
+    
+    console.log('Cart cleared and events dispatched');
+  };
+
+  // Send receipt via email
+  const sendEmailReceipt = async (orderDetails, receiptContent) => {
+    if (!formData.email) {
+      console.log('No email provided, skipping email receipt');
+      return;
+    }
+
+    try {
+      const emailData = {
+        to: formData.email,
+        subject: `Order Confirmation - ${orderDetails.orderId}`,
+        text: receiptContent,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .header { background: linear-gradient(135deg, #059669, #2563eb); color: white; padding: 20px; text-align: center; }
+              .content { padding: 20px; }
+              .order-info { background: #dbeafe; padding: 15px; border-radius: 8px; margin: 15px 0; }
+              .items { margin: 20px 0; }
+              .item { border-bottom: 1px solid #e5e7eb; padding: 10px 0; }
+              .total { font-size: 1.2em; font-weight: bold; color: #059669; }
+              .footer { background: #f3f4f6; padding: 15px; text-align: center; font-size: 0.9em; color: #6b7280; }
+              .product-link { color: #2563eb; text-decoration: none; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>SIR APOLLO'S MENWEAR</h1>
+              <h2>Order Confirmation</h2>
+            </div>
+            <div class="content">
+              <div class="order-info">
+                <p><strong>Order ID:</strong> ${orderDetails.orderId}</p>
+                <p><strong>User ID:</strong> ${orderDetails.userId}</p>
+                <p><strong>Order Date:</strong> ${new Date(orderDetails.orderDate).toLocaleString()}</p>
+                <p><strong>Product Link:</strong> <a href="${generateOrderLink(orderDetails)}" class="product-link">View Your Product</a></p>
+              </div>
+              
+              <div class="items">
+                <h3>Items Ordered (${orderDetails.items.length})</h3>
+                ${orderDetails.items.map((item, index) => {
+                  const productId = item.id || item.productId || 'N/A';
+                  return `
+                  <div class="item">
+                    <p><strong>${index + 1}. ${item.name}</strong></p>
+                    <p><strong>Product ID:</strong> ${productId}</p>
+                    <p>Size: ${item.size || 'Not specified'}</p>
+                    <p>Quantity: ${item.quantity || 1}</p>
+                    <p>Price: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</p>
+                    <p><a href="${generateItemLink(item)}" class="product-link">View Item Details</a></p>
+                  </div>
+                `}).join('')}
+              </div>
+              
+              <div class="order-summary">
+                <h3>Order Summary</h3>
+                <p>Subtotal: KES ${orderDetails.subtotal.toLocaleString()}</p>
+                <p>Shipping: KES ${orderDetails.shippingCost.toLocaleString()}</p>
+                <p class="total">Total: KES ${orderDetails.total.toLocaleString()}</p>
+              </div>
+              
+              <div class="customer-info">
+                <h3>Customer Information</h3>
+                <p>Name: ${orderDetails.customer.firstName} ${orderDetails.customer.lastName}</p>
+                <p>Email: ${orderDetails.customer.email || 'Not provided'}</p>
+                <p>Phone: ${orderDetails.customer.phone}</p>
+                <p>Address: ${orderDetails.customer.address || 'Not provided'}, ${orderDetails.customer.city}</p>
+                <p>Shipping Area: ${orderDetails.shipping.area}</p>
+              </div>
+              
+              <div class="payment-info">
+                <h3>Payment Instructions</h3>
+                <p>Please complete payment via M-Pesa:</p>
+                <p><strong>Paybill:</strong> ${paybillNumber}</p>
+                <p><strong>Account:</strong> ${accountNumber}</p>
+                <p><strong>Amount:</strong> KES ${orderDetails.total.toLocaleString()}</p>
+              </div>
+            </div>
+            <div class="footer">
+              <p>Thank you for your purchase!</p>
+              <p>Customer Support: ${whatsappNumber} | ${getBaseUrl()}</p>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      // Using EmailJS or similar service - you'll need to set this up
+      // This is a placeholder for email sending functionality
+      console.log('Email receipt prepared for:', formData.email);
+      
+      // Example using fetch to your backend email endpoint
+      // await fetch('/api/send-email', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(emailData)
+      // });
+      
+    } catch (error) {
+      console.error('Failed to send email receipt:', error);
+    }
+  };
+
+  // Send receipt to WhatsApp automatically
+  const sendToWhatsApp = (orderDetails) => {
+    const shippingCost = orderDetails.shippingCost;
+    const totalAmount = orderDetails.total;
+    
+    // Get product IDs for the order
+    const productIds = orderDetails.items.map(item => item.id || item.productId || 'N/A').join(', ');
+    
+    // Create a shorter version of the receipt for WhatsApp
+    const shortReceipt = `
+*SIR APOLLO'S MENWEAR - ORDER CONFIRMATION*
+
+*Order ID:* ${orderDetails.orderId}
+*User ID:* ${orderDetails.userId}
+*Product IDs:* ${productIds}
+*Number of Items:* ${orderDetails.items.length}
+
+*Items:*
+${orderDetails.items.map((item, index) => {
+  const productId = item.id || item.productId || 'N/A';
+  return `
+${index + 1}. *${item.name}*
+   Product ID: ${productId}
+   Size: ${item.size || 'Not specified'}
+   Price: KES ${item.price ? parseInt(item.price).toLocaleString() : '0'}
+   Quantity: ${item.quantity || 1}
+   Subtotal: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}
+`;
+}).join('')}
+
+*Shipping Area:* ${orderDetails.customer.shippingArea}
+*Shipping Cost:* KES ${shippingCost.toLocaleString()}
+*Subtotal:* KES ${orderDetails.subtotal.toLocaleString()}
+*Total:* KES ${totalAmount.toLocaleString()}
+
+*Customer:* ${orderDetails.customer.firstName} ${orderDetails.customer.lastName}
+${orderDetails.customer.email ? `*Email:* ${orderDetails.customer.email}` : '*Email:* Not provided'}
+${orderDetails.customer.address ? `*Address:* ${orderDetails.customer.address}` : '*Address:* Not provided'}
+*City:* ${orderDetails.customer.city}
+${orderDetails.customer.postalCode ? `*Postal Code:* ${orderDetails.customer.postalCode}` : '*Postal Code:* Not provided'}
+*Phone:* ${orderDetails.customer.phone}
+
+*Product Link:* ${generateOrderLink(orderDetails)}
+
+*Paybill:* ${paybillNumber}
+*Account:* ${accountNumber}
+
+*Order Date:* ${new Date(orderDetails.orderDate).toLocaleString()}
+
+_Thank you for your purchase!_
+    `;
+    
+    const whatsappMessage = encodeURIComponent(shortReceipt);
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
+    
+    // Open WhatsApp in a new tab
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // Automatically send receipts when payment is clicked
+  const sendAutomatedReceipts = async (orderDetailsObj) => {
+    // Generate receipt content
+    const { content: receiptContent } = generateReceipt(orderDetailsObj);
+    
+    // Send to WhatsApp
+    sendToWhatsApp(orderDetailsObj);
+    
+    // Send to Email if provided
+    if (formData.email) {
+      await sendEmailReceipt(orderDetailsObj, receiptContent);
+    }
+    
+    console.log('Automated receipts sent to WhatsApp and Email');
+  };
+
   // Load purchase data
   useEffect(() => {
     // Check if we have cart items from state (multiple items from cart)
     if (cartItemsFromState && cartItemsFromState.length > 0) {
       setPurchaseItems(cartItemsFromState);
       setPurchaseTotal(totalFromState);
+      
+      // Remove these items from the cart immediately when checkout page loads
+      console.log('Removing checkout items from cart...');
+      clearPurchasedItemsFromCart(cartItemsFromState);
     }
     // Check if we have a single purchase item in state (direct purchase)
     else if (purchaseItemFromState && isDirectPurchase) {
       setPurchaseItems([purchaseItemFromState]);
       setPurchaseTotal(parseFloat(purchaseItemFromState.price) || 0);
+      
+      // For direct purchases, we don't need to modify the cart
+      console.log('Direct purchase - no cart modification needed');
     } else {
       // If no purchase data at all, redirect to home
       navigate('/');
@@ -255,7 +569,7 @@ const Checkout = () => {
     // Scroll to top after a short delay to ensure DOM is ready
     setTimeout(() => {
       scrollToTop();
-    }, 100);
+    }, 300);
   }, [purchaseItemFromState, cartItemsFromState, isDirectPurchase, totalFromState, navigate]);
 
   // Handle form input changes
@@ -295,14 +609,15 @@ const Checkout = () => {
     setPaymentMethod(e.target.value);
   };
 
-  // Validate form - Email is completely optional, no validation at all
+  // Validate form - Only email, address, and postal code are optional
   const validateForm = () => {
     const newErrors = {};
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    // No email validation - completely optional
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    // Email is optional - no validation
+    // Address is optional - no validation
     if (!formData.city.trim()) newErrors.city = 'City is required';
+    // Postal code is optional - no validation
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (formData.phone.trim() && !/^0[0-9]{9}$/.test(formData.phone.trim())) newErrors.phone = 'Please enter a valid Kenyan phone number (e.g., 0712345678)';
     if (!formData.shippingArea) newErrors.shippingArea = 'Please select a shipping area';
@@ -311,10 +626,10 @@ const Checkout = () => {
   };
 
   // Generate order receipt (for download)
-  const generateReceipt = () => {
-    const orderId = `ORDER_${Date.now()}`;
-    const shippingCost = selectedShipping ? parseInt(selectedShipping.cost) : 0;
-    const totalAmount = purchaseTotal + shippingCost;
+  const generateReceipt = (orderDetailsObj) => {
+    const orderId = orderDetailsObj.orderId;
+    const shippingCost = orderDetailsObj.shippingCost;
+    const totalAmount = orderDetailsObj.total;
     
     const receiptContent = `
       SIR APOLLO'S MENWEAR - ORDER CONFIRMATION
@@ -323,45 +638,51 @@ const Checkout = () => {
       ORDER DETAILS:
       --------------
       Order ID: ${orderId}
-      User ID: ${userId}
-      Number of Items: ${purchaseItems.length}
+      User ID: ${orderDetailsObj.userId}
+      Number of Items: ${orderDetailsObj.items.length}
+      Product Link: ${generateOrderLink(orderDetailsObj)}
       
       ITEMS:
       ------
-      ${purchaseItems.map((item, index) => `
+      ${orderDetailsObj.items.map((item, index) => {
+        const productId = item.id || item.productId || 'N/A';
+        return `
       ${index + 1}. ${item.name}
+         Product ID: ${productId}
          Description: ${item.description || 'No description available'}
          Size: ${item.size || 'Not specified'}
          Price: KES ${item.price ? parseInt(item.price).toLocaleString() : '0'}
          Quantity: ${item.quantity || 1}
          Item Link: ${generateItemLink(item)}
          Subtotal: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}
-      `).join('')}
+      `;
+      }).join('')}
       
-      Shipping Area: ${formData.shippingArea}
+      Shipping Area: ${orderDetailsObj.customer.shippingArea}
       Shipping Cost: KES ${shippingCost.toLocaleString()}
-      Subtotal: KES ${purchaseTotal.toLocaleString()}
+      Subtotal: KES ${orderDetailsObj.subtotal.toLocaleString()}
       Total: KES ${totalAmount.toLocaleString()}
       
       CUSTOMER INFORMATION:
       --------------------
-      Name: ${formData.firstName} ${formData.lastName}
-      ${formData.email ? `Email: ${formData.email}` : 'Email: Not provided'}
-      Address: ${formData.address}
-      City: ${formData.city}
-      ${formData.postalCode ? `Postal Code: ${formData.postalCode}` : 'Postal Code: Not provided'}
-      Phone: ${formData.phone}
-      Country: ${formData.country}
+      Name: ${orderDetailsObj.customer.firstName} ${orderDetailsObj.customer.lastName}
+      ${orderDetailsObj.customer.email ? `Email: ${orderDetailsObj.customer.email}` : 'Email: Not provided'}
+      ${orderDetailsObj.customer.address ? `Address: ${orderDetailsObj.customer.address}` : 'Address: Not provided'}
+      City: ${orderDetailsObj.customer.city}
+      ${orderDetailsObj.customer.postalCode ? `Postal Code: ${orderDetailsObj.customer.postalCode}` : 'Postal Code: Not provided'}
+      Phone: ${orderDetailsObj.customer.phone}
+      Country: ${orderDetailsObj.customer.country}
       
       PAYMENT DETAILS:
       ----------------
       Paybill: ${paybillNumber}
       Account: ${accountNumber}
       
-      Order Date: ${new Date().toLocaleString()}
+      Order Date: ${new Date(orderDetailsObj.orderDate).toLocaleString()}
       
       IMPORTANT LINKS:
       ----------------
+      View Your Product: ${generateOrderLink(orderDetailsObj)}
       Customer Support: https://wa.me/${whatsappNumber}
       Website: ${getBaseUrl()}
       
@@ -375,67 +696,18 @@ const Checkout = () => {
     return { content: receiptContent, orderId };
   };
 
-  // Send receipt to WhatsApp automatically
-  const sendToWhatsApp = () => {
-    const shippingCost = selectedShipping ? parseInt(selectedShipping.cost) : 0;
-    const totalAmount = purchaseTotal + shippingCost;
-    
-    // Create a shorter version of the receipt for WhatsApp
-    const shortReceipt = `
-*SIR APOLLO'S MENWEAR - ORDER CONFIRMATION*
-
-*Order ID:* ${orderDetails?.orderId || 'N/A'}
-*User ID:* ${userId}
-*Number of Items:* ${purchaseItems.length}
-
-*Items:*
-${purchaseItems.map((item, index) => `
-${index + 1}. *${item.name}*
-   Size: ${item.size || 'Not specified'}
-   Price: KES ${item.price ? parseInt(item.price).toLocaleString() : '0'}
-   Quantity: ${item.quantity || 1}
-   Subtotal: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}
-`).join('')}
-
-*Shipping Area:* ${formData.shippingArea}
-*Shipping Cost:* KES ${shippingCost.toLocaleString()}
-*Subtotal:* KES ${purchaseTotal.toLocaleString()}
-*Total:* KES ${totalAmount.toLocaleString()}
-
-*Customer:* ${formData.firstName} ${formData.lastName}
-${formData.email ? `*Email:* ${formData.email}` : '*Email:* Not provided'}
-*Phone:* ${formData.phone}
-
-*Paybill:* ${paybillNumber}
-*Account:* ${accountNumber}
-
-*Order Date:* ${new Date().toLocaleString()}
-
-_Thank you for your purchase!_
-    `;
-    
-    const whatsappMessage = encodeURIComponent(shortReceipt);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
-    
-    // Open WhatsApp in a new tab
-    window.open(whatsappUrl, '_blank');
-  };
-
   // Download receipt
   const downloadReceipt = () => {
-    const { content } = generateReceipt();
+    const { content } = generateReceipt(orderDetails);
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `sir_apollo_order_${Date.now()}.txt`;
+    link.download = `sir_apollo_order_${orderDetails.orderId}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
-    // Send to WhatsApp after download
-    sendToWhatsApp();
   };
 
   // Handle order submission
@@ -452,7 +724,11 @@ _Thank you for your purchase!_
     if (!validateForm()) {
       const firstErrorField = Object.keys(errors)[0];
       if (firstErrorField) {
-        document.querySelector(`[name="${firstErrorField}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const errorElement = document.querySelector(`[name="${firstErrorField}"]`);
+        if (errorElement) {
+          smoothScrollTo(errorElement, 120);
+          errorElement.focus();
+        }
       }
       return;
     }
@@ -461,8 +737,10 @@ _Thank you for your purchase!_
     scrollToTop();
     
     setIsProcessing(true);
-    // Generate order details
-    const { orderId } = generateReceipt();
+    
+    // Generate order details with new ID system
+    const orderId = generateOrderId(purchaseItems);
+    const userId = generateUserId(purchaseItems);
     const shippingCost = selectedShipping ? parseInt(selectedShipping.cost) : 0;
     const totalAmount = purchaseTotal + shippingCost;
     
@@ -477,7 +755,12 @@ _Thank you for your purchase!_
       orderId,
       userId
     };
+    
+    // Send automated receipts immediately when payment is clicked
+    await sendAutomatedReceipts(orderDetailsObj);
+    
     setOrderDetails(orderDetailsObj);
+    
     // Simulate order processing
     setTimeout(() => {
       // Save order to localStorage
@@ -485,19 +768,13 @@ _Thank you for your purchase!_
       orders.push(orderDetailsObj);
       localStorage.setItem('sirApolloOrders', JSON.stringify(orders));
       
-      // Clear cart from localStorage if this was a cart purchase
-      if (cartItemsFromState && cartItemsFromState.length > 0) {
-        localStorage.removeItem('cart');
-        // Trigger cart update across tabs
-        window.dispatchEvent(new Event('storage'));
-      }
-      
       // Clear direct purchase from localStorage
       localStorage.removeItem('directPurchase');
       
       // Show confirmation view
       setShowConfirmation(true);
       setIsProcessing(false);
+      
       // Scroll to top again to ensure user sees the confirmation from the top
       scrollToTop();
     }, 2000);
@@ -513,11 +790,18 @@ _Thank you for your purchase!_
     navigate(-1);
   };
 
+  // Navigate to product page
+  const navigateToProduct = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
   const shippingCost = selectedShipping ? parseInt(selectedShipping.cost) : 0;
   const total = purchaseTotal + shippingCost;
 
   // If order is completed, show confirmation with details
   if (showConfirmation && orderDetails) {
+    const mainProductId = orderDetails.items[0].id || orderDetails.items[0].productId;
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 py-8 px-4">
         <div ref={topRef} className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden mt-16 md:mt-24">
@@ -525,14 +809,63 @@ _Thank you for your purchase!_
             <CheckCircle className="mx-auto h-12 w-12 text-white mb-4" />
             <h1 className="text-3xl md:text-4xl font-bold text-white">Order Confirmed!</h1>
             <p className="text-green-200 mt-2">Thank you for your purchase</p>
-            <p className="text-green-100 text-sm mt-1">Download your Invoice and automate it to our Customer Care WhatsApp</p>
+            <p className="text-green-100 text-sm mt-1">Your receipt has been sent to WhatsApp {formData.email ? 'and Email' : ''}</p>
           </div>
           <div className="p-6 md:p-8">
-            {/* Order ID and User ID */}
-            <div className="bg-blue-50 p-4 rounded-lg mb-6 text-center">
-              <p className="text-blue-800 font-medium">Order ID: {orderDetails.orderId}</p>
-              <p className="text-blue-800 font-medium">User ID: {orderDetails.userId}</p>
-              <p className="text-blue-600 text-sm mt-1">Keep these for your records</p>
+            {/* Order ID and User ID - ENHANCED STYLING */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 mb-8 shadow-sm">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Order Details</h2>
+                <p className="text-gray-600">Keep these details safe for your records</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Order ID Card */}
+                <div className="bg-white rounded-xl p-5 border border-blue-100 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                      <span className="text-blue-600 font-bold text-sm">ID</span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Order ID</h3>
+                      <p className="text-2xl font-bold text-gray-900 font-mono">{orderDetails.orderId}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* User ID Card */}
+                <div className="bg-white rounded-xl p-5 border border-green-100 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                      <User size={18} className="text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">User ID</h3>
+                      <p className="text-lg font-bold text-gray-900 font-mono">{orderDetails.userId}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Link Card */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 shadow-sm">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4">
+                    <ExternalLink size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">Product Access</h3>
+                    <p className="text-gray-600">Your order is linked to Product ID: <span className="font-mono font-semibold text-purple-600">{mainProductId}</span></p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigateToProduct(mainProductId)}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg"
+                >
+                  <ExternalLink size={18} />
+                  View Your Product
+                </button>
+              </div>
             </div>
             
             {/* Items ordered */}
@@ -541,36 +874,42 @@ _Thank you for your purchase!_
                 Items Ordered ({orderDetails.items.length})
               </h2>
               <div className="space-y-4">
-                {orderDetails.items.map((item, index) => (
-                  <div key={index} className="flex items-start border-b pb-4">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-16 h-20 md:w-20 md:h-24 object-contain rounded-lg bg-gray-100 p-1 mr-4"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/80x96?text=Image+Not+Found';
-                      }}
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      {item.size && item.size !== 'Not Selected' && (
-                        <p className="text-sm text-gray-600">Size: {item.size}</p>
-                      )}
-                      <p className="text-sm text-gray-600">Quantity: {item.quantity || 1}</p>
-                      <p className="text-sm text-blue-600 font-medium">
-                        KES {((item.price || 0) * (item.quantity || 1)).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
-                      </p>
-                      <a 
-                        href={generateItemLink(item)} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-xs text-green-600 hover:text-green-800 underline mt-1 inline-block"
-                      >
-                        View Item Details
-                      </a>
+                {orderDetails.items.map((item, index) => {
+                  const productId = item.id || item.productId || 'N/A';
+                  return (
+                    <div key={index} className="flex items-start border-b pb-4">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-20 md:w-20 md:h-24 object-contain rounded-lg bg-gray-100 p-1 mr-4"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/80x96?text=Image+Not+Found';
+                        }}
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{item.name}</p>
+                        <p className="text-sm text-gray-600">
+                          <strong>Product ID:</strong> {productId}
+                        </p>
+                        {item.size && item.size !== 'Not Selected' && (
+                          <p className="text-sm text-gray-600">Size: {item.size}</p>
+                        )}
+                        <p className="text-sm text-gray-600">Quantity: {item.quantity || 1}</p>
+                        <p className="text-sm text-blue-600 font-medium">
+                          KES {((item.price || 0) * (item.quantity || 1)).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                        </p>
+                        <a 
+                          href={generateItemLink(item)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-xs text-green-600 hover:text-green-800 underline mt-1 inline-block"
+                        >
+                          View Item Details
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             
@@ -597,12 +936,14 @@ _Thank you for your purchase!_
             
             {/* Shipping info */}
             <div className="bg-blue-50 p-4 md:p-6 rounded-lg mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-3">Shipping Information</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Customer Information</h3>
               <p className="text-gray-700">{orderDetails.customer.firstName} {orderDetails.customer.lastName}</p>
               {orderDetails.customer.email && (
                 <p className="text-gray-700">{orderDetails.customer.email}</p>
               )}
-              <p className="text-gray-700">{orderDetails.customer.address}</p>
+              {orderDetails.customer.address && (
+                <p className="text-gray-700">{orderDetails.customer.address}</p>
+              )}
               <p className="text-gray-700">{orderDetails.customer.city}{orderDetails.customer.postalCode ? `, ${orderDetails.customer.postalCode}` : ''}</p>
               <p className="text-gray-700">{orderDetails.customer.phone}</p>
               <p className="text-gray-700">{orderDetails.customer.country}</p>
@@ -627,19 +968,44 @@ _Thank you for your purchase!_
               </p>
             </div>
             
-            {/* Buttons */}
-            <div className="flex flex-col gap-4">
+            {/* Receipt delivery status */}
+            <div className="bg-green-50 p-4 md:p-6 rounded-lg mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">Receipt Delivery</h3>
+              <p className="text-gray-700">
+                ✅ Receipt sent to WhatsApp
+              </p>
+              {formData.email ? (
+                <p className="text-gray-700">
+                  ✅ Receipt sent to Email: {formData.email}
+                </p>
+              ) : (
+                <p className="text-gray-600">
+                  ℹ️ No email provided for email receipt
+                </p>
+              )}
+            </div>
+            
+            {/* Buttons - SMALLER STYLING */}
+            <div className="flex flex-col gap-3">
               <button
                 onClick={downloadReceipt}
-                className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium flex items-center justify-center"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
               >
-               Click to Download Invoice & to automate it to our CustomerCare WhatsApp
+                <Download size={18} />
+                Download Invoice
+              </button>
+              <button
+                onClick={() => navigateToProduct(mainProductId)}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+              >
+                <ExternalLink size={18} />
+                View Your Product
               </button>
               <button
                 onClick={navigateToHome}
-                className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium flex items-center justify-center"
+                className="bg-gradient-to-r from-green-600 to-green-700 text-white py-2 px-4 rounded-lg hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-200"
               >
-                <Home className="mr-2 h-5 w-5" />
+                <Home size={18} />
                 Continue Shopping
               </button>
             </div>
@@ -673,12 +1039,12 @@ _Thank you for your purchase!_
 
   // Main checkout form view
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 py-8 px-4 scroll-smooth">
       {/* Navigation */}
       <div className="max-w-6xl mx-auto mb-4">
         <button
           onClick={navigateBack}
-          className="flex items-center text-blue-700 hover:text-blue-900 font-medium"
+          className="flex items-center text-blue-700 hover:text-blue-900 font-medium transition-colors duration-200"
         >
           <ArrowLeft className="h-5 w-5 mr-1" />
           Back to {purchaseItems.length > 1 ? 'Cart' : 'Product'}
@@ -691,7 +1057,7 @@ _Thank you for your purchase!_
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left column - Form */}
           <div className="lg:w-2/3">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div ref={formRef} className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300">
               <div className="bg-gradient-to-r from-blue-900 to-purple-800 py-4 px-6">
                 <h2 className="text-xl font-bold text-white flex items-center">
                   <ShoppingBag className="mr-2 h-5 w-5" />
@@ -718,7 +1084,7 @@ _Thank you for your purchase!_
                           name="firstName"
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                             errors.firstName ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Enter your first name"
@@ -736,7 +1102,7 @@ _Thank you for your purchase!_
                           name="lastName"
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                             errors.lastName ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Enter your last name"
@@ -756,7 +1122,7 @@ _Thank you for your purchase!_
                       <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                           Email Address
-                          <span className="text-gray-500 text-xs ml-1">(Optional)</span>
+                          <span className="text-gray-500 text-xs ml-1">(Optional - for receipt)</span>
                         </label>
                         <input
                           type="email"
@@ -764,8 +1130,8 @@ _Thank you for your purchase!_
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="your.email@example.com (Optional)"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          placeholder="your.email@example.com (For receipt delivery)"
                         />
                       </div>
                       
@@ -779,7 +1145,7 @@ _Thank you for your purchase!_
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                             errors.phone ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="07XXXXXXXX"
@@ -790,18 +1156,18 @@ _Thank you for your purchase!_
                     
                     <div className="mt-4">
                       <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                        Country
+                        Country *
                       </label>
                       <select
                         id="country"
                         name="country"
                         value={formData.country}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                       >
                         <option value="Kenya">Kenya</option>
                         <option value="Uganda">Uganda</option>
-                        <option value ="Tanzania">Tanzania</option>
+                        <option value="Tanzania">Tanzania</option>
                         <option value="Rwanda">Rwanda</option>
                         <option value="Other">Other</option>
                       </select>
@@ -817,7 +1183,8 @@ _Thank you for your purchase!_
                     <div className="space-y-4">
                       <div>
                         <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                          Address *
+                          Address
+                          <span className="text-gray-500 text-xs ml-1">(Optional)</span>
                         </label>
                         <input
                           type="text"
@@ -825,12 +1192,9 @@ _Thank you for your purchase!_
                           name="address"
                           value={formData.address}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                            errors.address ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="Enter your address"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                          placeholder="Enter your address (Optional)"
                         />
-                        {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -844,7 +1208,7 @@ _Thank you for your purchase!_
                             name="city"
                             value={formData.city}
                             onChange={handleInputChange}
-                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                               errors.city ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="Enter your city"
@@ -863,7 +1227,7 @@ _Thank you for your purchase!_
                             name="postalCode"
                             value={formData.postalCode}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                             placeholder="Enter postal code (Optional)"
                           />
                         </div>
@@ -878,7 +1242,7 @@ _Thank you for your purchase!_
                           name="shippingArea"
                           value={formData.shippingArea}
                           onChange={handleShippingChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                             errors.shippingArea ? 'border-red-500' : 'border-gray-300'
                           }`}
                         >
@@ -901,7 +1265,7 @@ _Thank you for your purchase!_
                       Payment Method
                     </h3>
                     <div className="space-y-2">
-                      <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                      <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-all duration-200">
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -914,7 +1278,7 @@ _Thank you for your purchase!_
                         <span className="ml-auto text-xs bg-blue-100 text-blue-800 py-1 px-2 rounded-full">Recommended</span>
                       </label>
                       
-                      <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 opacity-70">
+                      <label className="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 opacity-70 transition-all duration-200">
                         <input
                           type="radio"
                           name="paymentMethod"
@@ -929,9 +1293,9 @@ _Thank you for your purchase!_
                     </div>
                     
                     {paymentMethod === 'mpesa' && (
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg transition-all duration-200">
                         <p className="text-sm text-blue-700">
-                          You will receive M-Pesa payment instructions after submitting your order.
+                          Receipt will be automatically sent to WhatsApp {formData.email ? 'and your email' : ''} when you click Pay.
                         </p>
                       </div>
                     )}
@@ -945,7 +1309,7 @@ _Thank you for your purchase!_
                       type="checkbox"
                       checked={formData.rememberInfo}
                       onChange={handleInputChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all duration-200"
                     />
                     <label htmlFor="rememberInfo" className="ml-2 block text-sm text-gray-900">
                       Save my information for next time
@@ -955,7 +1319,7 @@ _Thank you for your purchase!_
                   {/* Submit button */}
                   <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
                     disabled={isProcessing}
                   >
                     {isProcessing ? (
@@ -964,7 +1328,7 @@ _Thank you for your purchase!_
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Processing...
+                        Sending Receipts...
                       </span>
                     ) : (
                       `Pay KES ${total.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`
@@ -977,59 +1341,65 @@ _Thank you for your purchase!_
 
           {/* Right column - Order Summary */}
           <div className="lg:w-1/3">
-            <div ref={orderSummaryRef} className="bg-white rounded-xl shadow-lg overflow-hidden lg:sticky lg:top-6">
+            <div ref={orderSummaryRef} className="bg-white rounded-xl shadow-lg overflow-hidden lg:sticky lg:top-6 transition-all duration-300">
               <div className="bg-gradient-to-r from-green-600 to-blue-700 py-4 px-6">
                 <h2 className="text-xl font-bold text-white">Order Summary</h2>
                 <p className="text-green-200 text-sm mt-1">{purchaseItems.length} item{purchaseItems.length !== 1 ? 's' : ''}</p>
               </div>
               
               <div className="p-6">
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {purchaseItems.map((item, index) => (
-                    <div key={index} className="flex items-center border-b pb-4">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-20 object-contain rounded-lg bg-gray-100 p-1 mr-4"
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/64x80?text=Image+Not+Found';
-                        }}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                        {item.size && item.size !== 'Not Selected' && (
-                          <p className="text-xs text-gray-600">Size: {item.size}</p>
-                        )}
-                        <p className="text-xs text-gray-600">Quantity: {item.quantity || 1}</p>
-                        <p className="text-sm font-medium text-blue-700 mt-1">
-                          KES {((item.price || 0) * (item.quantity || 1)).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
-                        </p>
-                        <a 
-                          href={generateItemLink(item)} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-xs text-green-600 hover:text-green-800 underline mt-1 inline-block"
-                        >
-                          View Item Details
-                        </a>
+                <div className="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                  {purchaseItems.map((item, index) => {
+                    const productId = item.id || item.productId || 'N/A';
+                    return (
+                      <div key={index} className="flex items-center border-b pb-4 transition-all duration-200 hover:bg-gray-50 -mx-2 px-2 rounded-lg">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-20 object-contain rounded-lg bg-gray-100 p-1 mr-4 transition-all duration-200 hover:scale-105"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/64x80?text=Image+Not+Found';
+                          }}
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">{item.name}</p>
+                          <p className="text-xs text-gray-600">
+                            <strong>Product ID:</strong> {productId}
+                          </p>
+                          {item.size && item.size !== 'Not Selected' && (
+                            <p className="text-xs text-gray-600">Size: {item.size}</p>
+                          )}
+                          <p className="text-xs text-gray-600">Quantity: {item.quantity || 1}</p>
+                          <p className="text-sm font-medium text-blue-700 mt-1">
+                            KES {((item.price || 0) * (item.quantity || 1)).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                          </p>
+                          <a 
+                            href={generateItemLink(item)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-green-600 hover:text-green-800 underline mt-1 inline-block transition-colors duration-200"
+                          >
+                            View Item Details
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 
                 {/* Totals */}
                 <div className="space-y-4 border-t border-gray-200 pt-6">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between transition-all duration-200 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg">
                     <span className="text-gray-600">Subtotal</span>
                     <span className="font-medium">KES {purchaseTotal.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between transition-all duration-200 hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-medium">
                       {selectedShipping ? `KES ${selectedShipping.cost}` : 'Select area'}
                     </span>
                   </div>
-                  <div className="flex justify-between pt-4 border-t border-gray-200">
+                  <div className="flex justify-between pt-4 border-t border-gray-200 transition-all duration-200 hover:bg-blue-50 -mx-2 px-2 py-2 rounded-lg">
                     <span className="text-lg font-bold text-gray-900">Total</span>
                     <span className="text-lg font-bold text-blue-700">
                       KES {total.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
@@ -1037,30 +1407,71 @@ _Thank you for your purchase!_
                   </div>
                 </div>
                 
+                {/* Order ID Preview */}
+                <div className="mt-6 p-4 bg-purple-50 rounded-lg transition-all duration-200 hover:bg-purple-100">
+                  <p className="text-sm text-purple-700 font-medium">
+                    Your Order ID will be:
+                  </p>
+                  <p className="text-xs text-purple-600 mt-1 font-mono">
+                    {generateOrderId(purchaseItems)}
+                  </p>
+                  <p className="text-xs text-purple-500 mt-1">
+                    {purchaseItems.length === 1 ? 
+                      'Linked directly to your product' : 
+                      'Contains all product IDs'}
+                  </p>
+                </div>
+                
+                {/* User ID Preview */}
+                <div className="mt-4 p-4 bg-green-50 rounded-lg transition-all duration-200 hover:bg-green-100">
+                  <p className="text-sm text-green-700 font-medium">
+                    Your User ID will be:
+                  </p>
+                  <p className="text-xs text-green-600 mt-1 font-mono">
+                    {generateUserId(purchaseItems)}
+                  </p>
+                  <p className="text-xs text-green-500 mt-1">
+                    Based on your purchased items and order time
+                  </p>
+                </div>
+                
                 {/* Shipping info */}
                 {selectedShipping && (
-                  <div className="mt-6 p-4 bg-green-50 rounded-lg">
+                  <div className="mt-6 p-4 bg-green-50 rounded-lg transition-all duration-200 hover:bg-green-100">
                     <p className="text-sm text-green-700">
                       Shipping to {selectedShipping.area} will cost KES {selectedShipping.cost}
                     </p>
                   </div>
                 )}
                 
+                {/* Automated receipt info */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg transition-all duration-200 hover:bg-blue-100">
+                  <p className="text-sm text-blue-700 font-medium">
+                    Automated Receipt Delivery
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    • WhatsApp: Always sent
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    • Email: {formData.email ? 'Will be sent' : 'Provide email above'}
+                  </p>
+                </div>
+                
                 {/* View summary button for mobile */}
                 <div className="lg:hidden mt-6">
                   <button
-                    onClick={scrollToOrderSummary}
-                    className="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 font-medium flex items-center justify-center"
+                    onClick={scrollToForm}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 font-medium flex items-center justify-center transition-all duration-300 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
                   >
-                    View Order Summary
+                    Continue to Form
                   </button>
                 </div>
                 
                 {/* Security badge */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center">
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg text-center transition-all duration-200 hover:bg-gray-100">
                   <div className="flex items-center justify-center text-gray-600 mb-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M5 9V7a5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm">Secure Checkout</span>
                   </div>
@@ -1071,6 +1482,24 @@ _Thank you for your purchase!_
           </div>
         </div>
       </div>
+
+      {/* Custom scrollbar styles */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
     </div>
   );
 };

@@ -10,6 +10,12 @@ const Cassual = () => {
   const [cartCount, setCartCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
+  // Debug: Log when component mounts
+  useEffect(() => {
+    console.log('Cassual component mounted');
+    console.log('Current path:', window.location.pathname);
+  }, []);
+
   // Cart synchronization
   useEffect(() => {
     const updateCart = () => {
@@ -19,7 +25,12 @@ const Cassual = () => {
     
     updateCart();
     window.addEventListener('storage', updateCart);
-    return () => window.removeEventListener('storage', updateCart);
+    window.addEventListener('cartUpdated', updateCart);
+    
+    return () => {
+      window.removeEventListener('storage', updateCart);
+      window.removeEventListener('cartUpdated', updateCart);
+    };
   }, []);
 
   // Casual shirts data matching the IDs from your ProductDetail component
@@ -29,21 +40,27 @@ const Cassual = () => {
       name: 'Urban Streetwear Shirt ⭐⭐⭐⭐⭐',
       image: Cassual1,
       price: 2000,
-      description: '🔥 Trendy urban streetwear shirt for casual occasions'
+      description: '🔥 Trendy urban streetwear shirt for casual occasions',
+      category: 'casual',
+      colors: ['Black', 'Navy', 'Gray']
     },
     {
       id: 103,
       name: 'Designer Denim Casual ⭐⭐⭐⭐⭐',
       image: Cassual2,
       price: 2000,
-      description: '🔥 Premium designer denim shirt for a stylish look'
+      description: '🔥 Premium designer denim shirt for a stylish look',
+      category: 'casual', 
+      colors: ['Blue', 'Light Blue', 'Black']
     },
     {
       id: 104,
       name: 'Premium Linen Blend ⭐⭐⭐⭐⭐',
       image: Cassual3,
       price: 2000,
-      description: '🔥 Comfortable linen blend shirt perfect for casual wear'
+      description: '🔥 Comfortable linen blend shirt perfect for casual wear',
+      category: 'casual',
+      colors: ['White', 'Beige', 'Light Gray']
     }
   ];
 
@@ -54,22 +71,36 @@ const Cassual = () => {
       name: shirt.name,
       price: shirt.price,
       image: shirt.image,
+      description: shirt.description,
+      category: shirt.category,
+      size: 'M', // Default size
+      quantity: 1,
       addedAt: new Date().toLocaleString()
     };
     const updatedCart = [...storedCart, newItem];
     localStorage.setItem('cart', JSON.stringify(updatedCart));
+    
+    // Dispatch multiple events to ensure all components update
     window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('cartUpdated'));
+    window.dispatchEvent(new Event('cartCleared'));
+    
     alert(`${shirt.name} added to cart`);
   };
 
   const handlePurchase = (shirt) => {
+    console.log('Purchase clicked for shirt:', shirt.id);
+    
     // Prepare product data to pass to checkout
     const productData = {
       id: shirt.id,
       name: shirt.name,
       price: shirt.price,
       image: shirt.image,
-      description: shirt.description
+      description: shirt.description,
+      category: shirt.category,
+      size: 'Not Selected',
+      quantity: 1
     };
     
     // Navigate to checkout page with product data
@@ -83,11 +114,18 @@ const Cassual = () => {
 
   const cartTotal = () => {
     const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    return storedCart.reduce((sum, item) => sum + item.price, 0);
+    return storedCart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
   };
 
   const handleProductClick = (shirt) => {
-    navigate(`/product/${shirt.id}`);
+    console.log('Product clicked:', shirt.id);
+    
+    // Navigate to product detail page
+    navigate(`/product/${shirt.id}`, {
+      state: {
+        product: shirt
+      }
+    });
   };
 
   const handleCheckout = () => {
@@ -97,13 +135,26 @@ const Cassual = () => {
       return;
     }
     
+    const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+    
     // Navigate to checkout page with cart items
     navigate('/checkout', { 
       state: { 
         cartItems: cartItems,
+        total: total,
         isDirectPurchase: false 
       } 
     });
+  };
+
+  const removeFromCart = (index) => {
+    const storedCart = JSON.parse(localStorage.getItem('cart')) || [];
+    const updatedCart = storedCart.filter((_, i) => i !== index);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    
+    // Dispatch events to update all components
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('cartUpdated'));
   };
 
   return (
@@ -148,23 +199,36 @@ const Cassual = () => {
               <>
                 <div className="space-y-4">
                   {JSON.parse(localStorage.getItem('cart') || '[]').map((item, index) => (
-                    <div key={index} className="pb-2 border-b flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="max-w-full max-h-full object-contain"
-                          />
+                    <div key={index} className="pb-2 border-b">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm">{item.name}</p>
+                            <p className="text-xs text-gray-500">
+                              Size: {item.size || 'M'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Qty: {item.quantity || 1}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-sm">{item.name}</p>
-                          <p className="text-xs text-gray-500">
-                            Added: {new Date(item.addedAt).toLocaleDateString()}
-                          </p>
+                        <div className="text-right">
+                          <p className="text-sm font-bold">Ksh {((item.price || 0) * (item.quantity || 1)).toLocaleString()}</p>
+                          <button
+                            onClick={() => removeFromCart(index)}
+                            className="text-xs text-red-500 hover:text-red-700 mt-1"
+                          >
+                            Remove
+                          </button>
                         </div>
                       </div>
-                      <p className="text-sm font-bold">Ksh {item.price.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
@@ -197,6 +261,12 @@ const Cassual = () => {
         </div>
       )}
 
+      {/* Page Header */}
+      <div className="text-center mb-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Premium Casual Shirts</h1>
+        <p className="text-gray-600 text-lg">Discover our collection of stylish and comfortable casual shirts</p>
+      </div>
+
       {/* Shirt Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-10">
         {casualShirts.map((shirt) => (
@@ -222,7 +292,10 @@ const Cassual = () => {
               >
                 {shirt.name}
               </h3>
+              <p className="text-sm text-gray-600">{shirt.description}</p>
+              
               <p className="text-lg font-semibold text-blue-600">Ksh {shirt.price.toLocaleString()}</p>
+              
               <div className="space-y-2">
                 <button
                   onClick={() => handlePurchase(shirt)}
@@ -242,6 +315,34 @@ const Cassual = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Additional Information */}
+      <div className="bg-white rounded-xl p-6 shadow-lg">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">About Our Casual Shirts</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-blue-600 font-bold">✓</span>
+            </div>
+            <h3 className="font-semibold text-lg mb-2">Premium Quality</h3>
+            <p className="text-gray-600">Made from high-quality materials for lasting comfort and style</p>
+          </div>
+          <div className="text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-green-600 font-bold">✓</span>
+            </div>
+            <h3 className="font-semibold text-lg mb-2">Perfect Fit</h3>
+            <p className="text-gray-600">Available in multiple sizes to ensure the perfect fit for everyone</p>
+          </div>
+          <div className="text-center">
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-purple-600 font-bold">✓</span>
+            </div>
+            <h3 className="font-semibold text-lg mb-2">Fast Shipping</h3>
+            <p className="text-gray-600">Quick delivery across Kenya with secure payment options</p>
+          </div>
+        </div>
       </div>
     </section>
   );

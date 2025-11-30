@@ -40,8 +40,8 @@ function App() {
           <Route path="/accessories/socks" element={<Socks />} />
           <Route path="/accessories/ties" element={<Ties />} />
           
-          {/* Shirt Routes - Fixed the path from /shirts/cassual to /shirts/casual */}
-          <Route path="/shirts/casual" element={<Cassual />} />
+          {/* Shirt Routes - FIXED: Changed from /shirts/casual to /shirts/cassual */}
+          <Route path="/shirts/cassual" element={<Cassual />} />
           <Route path="/shirts/official" element={<Official />} />
           
           {/* Other Categories Routes */}

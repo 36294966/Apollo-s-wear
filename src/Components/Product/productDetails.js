@@ -503,6 +503,28 @@ const ProductDetail = () => {
 
   const similarProducts = (() => {
     const excludeId = product.id;
+    
+    // Socks category
+    if (product.category === 'Socks') {
+      let primary = products.filter((p) => p.category === 'Socks' && p.id !== excludeId).slice(0, 8);
+      if (primary.length < 8) {
+        const filler = products.filter((p) => p.category !== 'Socks' && p.id !== excludeId).slice(0, 8 - primary.length);
+        primary = [...primary, ...filler];
+      }
+      return primary.slice(0, 8);
+    }
+    
+    // Ties category
+    if (product.category === 'Ties') {
+      let primary = products.filter((p) => p.category === 'Ties' && p.id !== excludeId).slice(0, 8);
+      if (primary.length < 8) {
+        const filler = products.filter((p) => p.category !== 'Ties' && p.id !== excludeId).slice(0, 8 - primary.length);
+        primary = [...primary, ...filler];
+      }
+      return primary.slice(0, 8);
+    }
+    
+    // Belt category
     if (product.category === 'Belt') {
       let primary = products.filter((p) => p.category === 'Belt' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -511,6 +533,8 @@ const ProductDetail = () => {
       }
       return primary.slice(0, 8);
     }
+    
+    // Cassual Shirt category
     if (product.category === 'Cassual Shirt') {
       let primary = products.filter((p) => p.category === 'Official Shirt' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -520,6 +544,7 @@ const ProductDetail = () => {
       return primary.slice(0, 8);
     }
 
+    // Jacket category
     if (product.category === 'Jacket') {
       let primary = products.filter((p) => p.category === 'Jacket' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -528,6 +553,8 @@ const ProductDetail = () => {
       }
       return primary.slice(0, 8);
     }
+    
+    // Jeans category
     if (product.category === 'Jeans') {
       let primary = products.filter((p) => p.category === 'Jeans' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -537,6 +564,7 @@ const ProductDetail = () => {
       return primary.slice(0, 8);
     }
 
+    // Official Shirt category
     if (product.category === 'Official Shirt') {
       let primary = products.filter((p) => p.category === 'Official Shirt' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -546,6 +574,7 @@ const ProductDetail = () => {
       return primary.slice(0, 8);
     }
 
+    // Tuxedo Dinner Suits category
     if (product.category === 'Tuxedo Dinner Suits') {
       let primary = products.filter((p) => p.category === 'Tuxedo Dinner Suits' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -555,6 +584,7 @@ const ProductDetail = () => {
       return primary.slice(0, 8);
     }
 
+    // Kaunda Suits category
     if (product.category === 'Kaunda Suits') {
       let primary = products.filter((p) => p.category === 'Kaunda Suits' && p.id !== excludeId).slice(0, 4);
       if (primary.length < 4) {
@@ -564,6 +594,7 @@ const ProductDetail = () => {
       return primary.slice(0, 4);
     }
 
+    // TwoPiece Suits category
     if (product.category === 'TwoPiece Suits') {
       let primary = products.filter((p) => p.category === 'TwoPiece Suits' && p.id >= 38 && p.id !== excludeId).slice(0, 4);
       if (primary.length < 4) {
@@ -574,6 +605,7 @@ const ProductDetail = () => {
       return primary.slice(0, 4);
     }
 
+    // Three-Piece Suits category
     if (product.category === 'Three-Piece Suits') {
       let primary = products.filter((p) => p.category === 'Three-Piece Suits' && p.id !== excludeId).slice(0, 8);
       if (primary.length < 8) {
@@ -718,5 +750,5 @@ const ProductDetail = () => {
     </section>
   );
 };
-
+ 
 export default ProductDetail;
