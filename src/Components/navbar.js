@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserTie, faShirt, faGem, faVest, faHouse } from '@fortawesome/free-solid-svg-icons';
-
+import Celebration1 from '../Assests/Advertisement/celebration1.jpg';
 import Logo from '../Assests/logo.jpg';
 
 const Navbar = ({ onFilterSelect }) => {
@@ -405,30 +405,48 @@ const Navbar = ({ onFilterSelect }) => {
   return (
     <>
       <nav className="fixed top-0 left-0 w-full bg-blue-600 text-white shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-3 py-2 flex justify-between items-center">
-          {/* Logo - Made slightly bigger */}
-          <img
-            src={Logo}
-            alt="Sir Apollo Men Wear Logo"
-            className="h-14 w-14 md:h-18 md:w-18 rounded-full object-cover shadow-lg cursor-pointer transition-transform hover:scale-105"
-            onClick={() => {
-              navigate('/');
-              scrollToTop();
-            }}
-          />
+        <div className="max-w-7xl mx-auto px-2 py-1 flex justify-between items-center">
+          {/* Logo and Celebration Image Container */}
+          <div className="flex items-center">
+            {/* Logo */}
+            <img
+              src={Logo}
+              alt="Sir Apollo Men Wear Logo"
+              className="h-16 w-16 md:h-20 md:w-20 rounded-full object-cover shadow-lg cursor-pointer transition-transform hover:scale-105"
+              onClick={() => {
+                navigate('/');
+                scrollToTop();
+              }}
+            />
+            
+            {/* Celebration Image with Multi-Color Blinking Effect - Only show on medium screens and up */}
+            <div className="relative ml-1 md:ml-2">
+              <img
+                src={Celebration1}
+                alt="December Celebration Offer - Holiday Special!"
+                className="h-16 w-auto md:h-20 rounded-lg object-cover shadow-lg cursor-pointer transition-transform hover:scale-105 relative z-10"
+                onClick={() => {
+                  navigate('/');
+                  scrollToTop();
+                }}
+              />
+              {/* Animated border glow with multiple colors */}
+              <div className="absolute inset-0 rounded-lg animate-color-change-fast z-0"></div>
+            </div>
+          </div>
 
-          {/* Desktop Menu - Increased spacing and size */}
-          <div className="hidden md:flex items-center space-x-4 font-semibold text-base">
+          {/* Desktop Menu - All items in one container with proper spacing */}
+          <div className="hidden md:flex items-center space-x-4 font-semibold text-sm">
             <button
               onClick={() => {
                 navigate('/');
                 setIsOpen(false);
                 scrollToTop();
               }}
-              className="flex items-center group hover:text-yellow-200 transition px-3 py-2 rounded-lg hover:bg-blue-700"
+              className="flex items-center group hover:text-yellow-200 transition px-3 py-1 rounded-lg hover:bg-blue-700"
             >
-              <FontAwesomeIcon icon={faHouse} className="group-hover:-translate-x-0.5 transition-all text-lg" />
-              <span className="ml-2">Home</span>
+              <FontAwesomeIcon icon={faHouse} className="group-hover:-translate-x-0.5 transition-all" />
+              <span className="ml-1">Home</span>
             </button>
 
             {menuItems.map((item) => (
@@ -444,7 +462,7 @@ const Navbar = ({ onFilterSelect }) => {
                 }}
               >
                 <button
-                  className="flex items-center space-x-2 group hover:text-yellow-200 transition px-3 py-2 rounded-lg hover:bg-blue-700"
+                  className="flex items-center space-x-1 group hover:text-yellow-200 transition px-3 py-1 rounded-lg hover:bg-blue-700"
                   onClick={() => {
                     if (item.page) {
                       handleNavigation(item.page);
@@ -456,31 +474,31 @@ const Navbar = ({ onFilterSelect }) => {
                   <div className="transition-transform group-hover:scale-110">
                     {item.icon}
                   </div>
-                  <span className="text-base whitespace-nowrap">{item.title}</span>
+                  <span className="text-sm whitespace-nowrap">{item.title}</span>
                   {item.dropdown && (
                     <ChevronDown 
-                      size={16} 
+                      size={14} 
                       className={`transition-transform ${openDropdown === item.title ? 'rotate-180' : ''}`} 
                     />
                   )}
                 </button>
 
                 {item.dropdown && openDropdown === item.title && (
-                  <div className="absolute top-12 left-0 bg-white text-black shadow-xl rounded-lg p-4 grid gap-2 w-56 z-50 border border-blue-100">
+                  <div className="absolute top-10 left-0 bg-white text-black shadow-xl rounded-lg p-3 grid gap-1 w-48 z-50 border border-blue-100">
                     {Object.entries(item.dropdown).map(([section, values]) => (
                       <div key={section}>
-                        <p className="text-blue-700 font-bold text-base mb-2 border-b border-blue-100 pb-1">{section}</p>
-                        <div className="space-y-1">
+                        <p className="text-blue-700 font-bold text-xs mb-1 border-b border-blue-100 pb-1">{section}</p>
+                        <div className="space-y-0.5">
                           {values.map((val) => (
                             <button
                               key={val}
                               onClick={() => handleFilter(item.title, val)}
-                              className="w-full text-left px-3 py-2.5 text-base rounded-lg hover:bg-blue-50 transition-all flex items-center group/item"
+                              className="w-full text-left px-2 py-1.5 text-sm rounded-lg hover:bg-blue-50 transition-all flex items-center group/item"
                             >
                               <span className="group-hover/item:translate-x-1 transition-transform">{val}</span>
                               <svg 
                                 xmlns="http://www.w3.org/2000/svg" 
-                                className="h-4 w-4 ml-2 opacity-0 group-hover/item:opacity-100 transition-opacity" 
+                                className="h-3 w-3 ml-1 opacity-0 group-hover/item:opacity-100 transition-opacity" 
                                 fill="none" 
                                 viewBox="0 0 24 24" 
                                 stroke="currentColor"
@@ -500,22 +518,22 @@ const Navbar = ({ onFilterSelect }) => {
             {/* User Account / Login */}
             {user ? (
               <div className="relative group">
-                <button className="flex items-center space-x-2 group hover:text-yellow-200 transition px-3 py-2 rounded-lg hover:bg-blue-700">
+                <button className="flex items-center space-x-1 group hover:text-yellow-200 transition px-3 py-1 rounded-lg hover:bg-blue-700">
                   <div className="transition-transform group-hover:scale-110">
-                    <User size={20} />
+                    <User size={18} />
                   </div>
-                  <span className="text-base whitespace-nowrap">Hi, {user.firstName}</span>
-                  <ChevronDown size={14} />
+                  <span className="text-sm whitespace-nowrap">Hi, {user.firstName}</span>
+                  <ChevronDown size={12} />
                 </button>
-                <div className="absolute top-12 right-0 bg-white text-black shadow-xl rounded-lg p-3 w-48 z-50 border border-blue-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <div className="px-3 py-2 text-sm text-gray-600 border-b border-gray-100">
+                <div className="absolute top-10 right-0 bg-white text-black shadow-xl rounded-lg p-2 w-40 z-50 border border-blue-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                  <div className="px-2 py-1 text-xs text-gray-600 border-b border-gray-100">
                     {user.email}
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-3 py-2.5 text-base rounded-lg hover:bg-red-50 text-red-600 transition-all flex items-center"
+                    className="w-full text-left px-2 py-1.5 text-sm rounded-lg hover:bg-red-50 text-red-600 transition-all flex items-center"
                   >
-                    <LogOut size={16} className="mr-2" />
+                    <LogOut size={14} className="mr-1" />
                     Logout
                   </button>
                 </div>
@@ -523,18 +541,18 @@ const Navbar = ({ onFilterSelect }) => {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="flex items-center space-x-2 group hover:text-yellow-200 transition px-3 py-2 rounded-lg hover:bg-blue-700"
+                className="flex items-center space-x-1 group hover:text-yellow-200 transition px-3 py-1 rounded-lg hover:bg-blue-700"
               >
                 <div className="transition-transform group-hover:scale-110">
-                  <User size={20} />
+                  <User size={18} />
                 </div>
-                <span className="text-base">Login</span>
+                <span className="text-sm">Login</span>
               </button>
             )}
 
             {/* Cart */}
             <div
-              className="flex items-center space-x-2 hover:text-yellow-200 cursor-pointer relative group px-3 py-2 rounded-lg hover:bg-blue-700"
+              className="flex items-center space-x-1 hover:text-yellow-200 cursor-pointer relative group px-3 py-1 rounded-lg hover:bg-blue-700"
               onClick={() => {
                 navigate('/cart');
                 setIsOpen(false);
@@ -542,60 +560,60 @@ const Navbar = ({ onFilterSelect }) => {
               }}
             >
               <div className="transition-transform group-hover:scale-110">
-                <ShoppingCart size={20} />
+                <ShoppingCart size={18} />
               </div>
-              <span className="text-base">Cart</span>
+              <span className="text-sm">Cart</span>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs group-hover:animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs group-hover:animate-pulse">
                   {cartCount}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Mobile Menu & Cart */}
-          <div className="md:hidden flex items-center space-x-4">
+          {/* Mobile Menu & Cart - NO celebration image here */}
+          <div className="md:hidden flex items-center space-x-3">
             {/* User Greeting for Mobile - Now visible when logged in */}
             {user ? (
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-1 bg-blue-700 px-3 py-1.5 rounded-lg">
-                  <User size={16} className="text-yellow-200" />
-                  <span className="text-sm font-semibold text-white whitespace-nowrap">
+              <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 bg-blue-700 px-2 py-1 rounded-lg">
+                  <User size={14} className="text-yellow-200" />
+                  <span className="text-xs font-semibold text-white whitespace-nowrap">
                     Hi, {user.firstName}
                   </span>
                 </div>
                 <button 
-                  className="p-2 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="p-1 hover:bg-blue-700 rounded-lg transition-colors"
                   onClick={() => {
                     if (window.confirm('Are you sure you want to logout?')) {
                       handleLogout();
                     }
                   }}
                 >
-                  <LogOut size={18} className="text-red-200" />
+                  <LogOut size={16} className="text-red-200" />
                 </button>
               </div>
             ) : (
               <button 
-                className="p-2 hover:bg-blue-700 rounded-lg transition-colors"
+                className="p-1 hover:bg-blue-700 rounded-lg transition-colors"
                 onClick={() => setShowAuthModal(true)}
               >
-                <User size={20} />
+                <User size={18} />
               </button>
             )}
 
             {/* Cart for Mobile */}
             <div
-              className="relative cursor-pointer hover:text-yellow-200 p-2 rounded-lg hover:bg-blue-700"
+              className="relative cursor-pointer hover:text-yellow-200 p-1 rounded-lg hover:bg-blue-700"
               onClick={() => {
                 navigate('/cart');
                 setIsOpen(false);
                 scrollToTop();
               }}
             >
-              <ShoppingCart size={20} />
+              <ShoppingCart size={18} />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-3 h-3 flex items-center justify-center text-[8px]">
                   {cartCount}
                 </span>
               )}
@@ -604,32 +622,32 @@ const Navbar = ({ onFilterSelect }) => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 hover:bg-blue-700 rounded-lg transition-colors"
+              className="p-1 hover:bg-blue-700 rounded-lg transition-colors"
             >
-              {isOpen ? <X size={20} /> : <Menu size={20} />}
+              {isOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu Content */}
         {isOpen && (
-          <div className="md:hidden px-4 pb-4 bg-blue-600 space-y-2 text-lg">
+          <div className="md:hidden px-3 pb-3 bg-blue-600 space-y-1 text-sm">
             <button
               onClick={() => {
                 navigate('/');
                 setIsOpen(false);
                 scrollToTop();
               }}
-              className="flex items-center space-x-3 py-3 w-full hover:bg-blue-700 rounded-lg px-3 transition-colors"
+              className="flex items-center space-x-2 py-2 w-full hover:bg-blue-700 rounded-lg px-2 transition-colors"
             >
               <FontAwesomeIcon icon={faHouse} />
               <span>Home</span>
             </button>
 
             {menuItems.map((item) => (
-              <div key={item.title} className="space-y-1">
+              <div key={item.title} className="space-y-0.5">
                 <button
-                  className="flex justify-between items-center w-full py-3 px-3 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="flex justify-between items-center w-full py-2 px-2 hover:bg-blue-700 rounded-lg transition-colors"
                   onClick={() => {
                     if (item.page) {
                       handleNavigation(item.page);
@@ -638,7 +656,7 @@ const Navbar = ({ onFilterSelect }) => {
                     }
                   }}
                 >
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
                     <div className="transition-transform hover:scale-110">
                       {item.icon}
                     </div>
@@ -646,30 +664,30 @@ const Navbar = ({ onFilterSelect }) => {
                   </div>
                   {item.dropdown && (
                     <ChevronDown
-                      size={18}
+                      size={16}
                       className={`transition-transform ${openDropdown === item.title ? 'rotate-180' : ''}`}
                     />
                   )}
                 </button>
 
                 {item.dropdown && openDropdown === item.title && (
-                  <div className="ml-6 space-y-1 mt-1 border-l-2 border-blue-500 pl-3">
+                  <div className="ml-4 space-y-0.5 mt-0.5 border-l-2 border-blue-500 pl-2">
                     {Object.entries(item.dropdown).map(([section, values]) => (
                       <div key={section}>
-                        <p className="text-yellow-200 font-bold text-base">{section}</p>
-                        <div className="space-y-1 mt-1">
+                        <p className="text-yellow-200 font-bold text-xs">{section}</p>
+                        <div className="space-y-0.5 mt-0.5">
                           {values.map((val) => (
                             <button
                               key={val}
                               onClick={() => {
                                 handleFilter(item.title, val);
                               }}
-                              className="w-full text-left px-3 py-2.5 hover:bg-blue-700 rounded-lg flex items-center transition-colors group/item"
+                              className="w-full text-left px-2 py-1.5 hover:bg-blue-700 rounded-lg flex items-center transition-colors group/item text-sm"
                             >
-                              <span className="group-hover/item:translate-x-1 transition-transform text-base">{val}</span>
+                              <span className="group-hover/item:translate-x-1 transition-transform">{val}</span>
                               <svg 
                                 xmlns="http://www.w3.org/2000/svg" 
-                                className="h-4 w-4 ml-2 opacity-0 group-hover/item:opacity-100 transition-opacity" 
+                                className="h-3 w-3 ml-1 opacity-0 group-hover/item:opacity-100 transition-opacity" 
                                 fill="none" 
                                 viewBox="0 0 24 24" 
                                 stroke="currentColor"
@@ -693,15 +711,76 @@ const Navbar = ({ onFilterSelect }) => {
                   setShowAuthModal(true);
                   setIsOpen(false);
                 }}
-                className="flex items-center space-x-3 py-3 w-full hover:bg-blue-700 rounded-lg px-3 transition-colors"
+                className="flex items-center space-x-2 py-2 w-full hover:bg-blue-700 rounded-lg px-2 transition-colors"
               >
-                <User size={18} />
-                <span className="text-base">Login / Register</span>
+                <User size={16} />
+                <span className="text-sm">Login / Register</span>
               </button>
             )}
           </div>
         )}
       </nav>
+
+      {/* Add custom CSS for multi-color blinking effect */}
+      <style jsx>{`
+        @keyframes color-change-fast {
+          0% {
+            box-shadow: 0 0 15px 3px rgba(255, 215, 0, 0.8), 0 0 25px 5px rgba(255, 20, 147, 0.6);
+            border: 2px solid rgba(255, 215, 0, 0.8);
+          }
+          25% {
+            box-shadow: 0 0 15px 3px rgba(255, 20, 147, 0.8), 0 0 25px 5px rgba(0, 255, 255, 0.6);
+            border: 2px solid rgba(255, 20, 147, 0.8);
+          }
+          50% {
+            box-shadow: 0 0 15px 3px rgba(0, 255, 255, 0.8), 0 0 25px 5px rgba(50, 205, 50, 0.6);
+            border: 2px solid rgba(0, 255, 255, 0.8);
+          }
+          75% {
+            box-shadow: 0 0 15px 3px rgba(50, 205, 50, 0.8), 0 0 25px 5px rgba(255, 69, 0, 0.6);
+            border: 2px solid rgba(50, 205, 50, 0.8);
+          }
+          100% {
+            box-shadow: 0 0 15px 3px rgba(255, 69, 0, 0.8), 0 0 25px 5px rgba(255, 215, 0, 0.6);
+            border: 2px solid rgba(255, 69, 0, 0.8);
+          }
+        }
+        
+        @keyframes color-change-slow {
+          0% {
+            box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6), 0 0 15px 3px rgba(255, 20, 147, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.6);
+          }
+          33% {
+            box-shadow: 0 0 10px 2px rgba(0, 255, 255, 0.6), 0 0 15px 3px rgba(50, 205, 50, 0.4);
+            border: 1px solid rgba(0, 255, 255, 0.6);
+          }
+          66% {
+            box-shadow: 0 0 10px 2px rgba(255, 20, 147, 0.6), 0 0 15px 3px rgba(255, 69, 0, 0.4);
+            border: 1px solid rgba(255, 20, 147, 0.6);
+          }
+          100% {
+            box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.6), 0 0 15px 3px rgba(255, 20, 147, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.6);
+          }
+        }
+        
+        .animate-color-change-fast {
+          animation: color-change-fast 2s infinite;
+        }
+        
+        .animate-color-change-slow {
+          animation: color-change-slow 3s infinite;
+        }
+        
+        /* Hover effect stops the animation */
+        .relative:hover .animate-color-change-fast,
+        .relative:hover .animate-color-change-slow {
+          animation: none;
+          box-shadow: 0 0 15px 3px rgba(255, 215, 0, 0.8);
+          border: 2px solid rgba(255, 215, 0, 0.8);
+        }
+      `}</style>
 
       {/* Authentication Modal */}
       {showAuthModal && (

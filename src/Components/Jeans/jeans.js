@@ -44,7 +44,7 @@ const Jeans = () => {
     return () => window.removeEventListener('storage', updateCart);
   }, []);
 
-  // List of all jeans with IDs starting from 74
+  // List of all jeans with IDs starting from 99
   const jeansProducts = [
     { 
       id: 99, 
@@ -176,67 +176,67 @@ const Jeans = () => {
     },
     { 
       id: 115, 
-      name: 'The Athletic Taper👖', 
       image: Jean17, 
+      name: 'The Athletic Taper👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Athletic taper fit for active lifestyle'
+      description: '🌟 Athletic taper fit for active lifestyle',
+      category: 'Jeans' 
     },
     { 
       id: 116, 
-      name: 'Slim Utility👖', 
       image: Jean18, 
+      name: 'Slim Utility👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Slim utility jeans for practical style'
+      description: '🌟 Slim utility jeans for practical style',
+      category: 'Jeans' 
     },
     { 
       id: 117, 
-      name: 'Commuter Jean👖', 
       image: Jean19, 
+      name: 'Commuter Jean👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Comfortable commuter jeans for daily wear'
+      description: '🌟 Comfortable commuter jeans for daily wear',
+      category: 'Jeans' 
     },
     { 
       id: 118, 
-      name: 'Weeknight Jean👖', 
       image: Jean20, 
+      name: 'Weeknight Jean👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Perfect weeknight jeans for casual outings'
+      description: '🌟 Perfect weeknight jeans for casual outings',
+      category: 'Jeans' 
     },
     { 
       id: 119, 
-      name: 'The Modern Straight👖', 
       image: Jean21, 
+      name: 'The Modern Straight👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Modern straight cut for contemporary style'
+      description: '🌟 Modern straight cut for contemporary style',
+      category: 'Jeans' 
     },
     { 
       id: 120, 
-      name: 'The All-Day Jean👖', 
       image: Jean22, 
+      name: 'The All-Day Jean👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 All-day comfort jeans for extended wear'
+      description: '🌟 All-day comfort jeans for extended wear',
+      category: 'Jeans' 
     },
     { 
       id: 121, 
-      name: 'The Craftsman👖', 
       image: Jean23, 
+      name: 'The Craftsman👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Craftsman style jeans for durable quality'
+      description: '🌟 Craftsman style jeans for durable quality',
+      category: 'Jeans' 
     },
     { 
       id: 122, 
-      name: 'The Brawny Utility Fit👖', 
       image: Jean24, 
+      name: 'The Brawny Utility Fit👖', 
       price: 1850, 
-      category: 'jeans',
-      description: '🌟 Brawny utility fit for rugged appeal'
+      description: '🌟 Brawny utility fit for rugged appeal',
+      category: 'Jeans' 
     },
   ];
 
@@ -313,7 +313,13 @@ const Jeans = () => {
   };
 
   const handleProductClick = (item) => {
-    navigate(`/product/${item.id}`);
+    // Navigate to product detail page with the specific product ID
+    navigate(`/product/${item.id}`, { 
+      state: { 
+        product: item,
+        relatedProducts: jeansProducts.filter(jean => jean.id !== item.id)
+      } 
+    });
   };
 
   return (
