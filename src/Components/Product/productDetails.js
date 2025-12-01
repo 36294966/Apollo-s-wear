@@ -288,12 +288,12 @@ const products = [
   { id: 92, name: 'Signature Dress Shirt', price: 1800, description: '⭐⭐⭐⭐⭐ Official Shirt perfect for formal African occasions.', category: 'Official Shirt', image: Official16},
 
 
-  { id: 93, name: '🔥Urban Streetwear Shirt', price: 1700, description: '🌟 Adjustable Fit: Perfect for all waist sizes with a reliable, sturdy buckle that ensures comfort and security.', category: 'Cassual Shirt', image: Cassual1},
-  { id: 94, name: '🔥Designer Denim Casual', price: 1700, description: '🌟 Adjustable Fit: Perfect for all waist sizes with a reliable, sturdy buckle that ensures comfort and security.', category: 'Cassual Shirt', image: Cassual2},
-  { id: 95, name: '🔥Premium Linen Blend', price: 1700, description: '🌟 Adjustable Fit: Perfect for all waist sizes with a reliable, sturdy buckle that ensures comfort and security.', category: 'Cassual Shirt', image: Cassual3},
-{ id: 96, name: 'Athletic Fit Performance Polo ⭐⭐⭐⭐⭐', image: Cassual4, price: 1800, category: 'shirt' },
-{ id: 97, name: 'Boutique Collection Polo ⭐⭐⭐⭐⭐', image: Cassual5, price: 1800, category: 'shirt' },
-{ id: 98, name: 'Essential Everyday Polo ⭐⭐⭐⭐⭐', image: Cassual6, price: 1800, category: 'shirt' },
+  { id: 93, name: '🔥Urban Streetwear Shirt', price: 1250, description: '🌟 Adjustable Fit: Perfect for all waist sizes with a reliable, sturdy buckle that ensures comfort and security.', category: 'Cassual Shirt', image: Cassual1},
+  { id: 94, name: '🔥Designer Denim Casual', price: 1250, description: '🌟 Adjustable Fit: Perfect for all waist sizes with a reliable, sturdy buckle that ensures comfort and security.', category: 'Cassual Shirt', image: Cassual2},
+  { id: 95, name: '🔥Premium Linen Blend', price: 1250, description: '🌟 Adjustable Fit: Perfect for all waist sizes with a reliable, sturdy buckle that ensures comfort and security.', category: 'Cassual Shirt', image: Cassual3},
+{ id: 96, name: 'Athletic Fit Performance Polo ⭐⭐⭐⭐⭐', image: Cassual4, price: 1250, category: 'shirt' },
+{ id: 97, name: 'Boutique Collection Polo ⭐⭐⭐⭐⭐', image: Cassual5, price: 1250, category: 'shirt' },
+{ id: 98, name: 'Essential Everyday Polo ⭐⭐⭐⭐⭐', image: Cassual6, price: 1250, category: 'shirt' },
 
 
   // Jeans

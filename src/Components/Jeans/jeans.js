@@ -50,7 +50,7 @@ const Jeans = () => {
       id: 99, 
       image: Jean1, 
       name: 'Slim Fit Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Premium slim fit jeans for a modern look',
       category: 'Jeans' 
     },
@@ -58,7 +58,7 @@ const Jeans = () => {
       id: 100, 
       image: Jean2, 
       name: 'Vintage Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Classic vintage style jeans with retro appeal',
       category: 'Jeans' 
     },
@@ -66,7 +66,7 @@ const Jeans = () => {
       id: 101, 
       image: Jean3, 
       name: 'Ripped Skinny Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Trendy ripped skinny jeans for a bold statement',
       category: 'Jeans' 
     },
@@ -74,7 +74,7 @@ const Jeans = () => {
       id: 102, 
       image: Jean4, 
       name: 'Classic Straight Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Timeless straight leg jeans for everyday wear',
       category: 'Jeans' 
     },
@@ -82,7 +82,7 @@ const Jeans = () => {
       id: 103, 
       image: Jean5, 
       name: 'High Super Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 High-waisted super comfortable jeans',
       category: 'Jeans' 
     },
@@ -90,7 +90,7 @@ const Jeans = () => {
       id: 104, 
       image: Jean6, 
       name: 'Black Stretch Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Stretchy black jeans for maximum comfort',
       category: 'Jeans' 
     },
@@ -98,7 +98,7 @@ const Jeans = () => {
       id: 105, 
       image: Jean7, 
       name: 'Classic Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Classic blue jeans that never go out of style',
       category: 'Jeans' 
     },
@@ -106,7 +106,7 @@ const Jeans = () => {
       id: 106, 
       image: Jean8, 
       name: 'Tapered Cargo Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Practical cargo jeans with tapered fit',
       category: 'Jeans' 
     },
@@ -114,7 +114,7 @@ const Jeans = () => {
       id: 107, 
       image: Jean9, 
       name: 'Flare Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Stylish flare jeans for a retro vibe',
       category: 'Jeans' 
     },
@@ -122,7 +122,7 @@ const Jeans = () => {
       id: 108, 
       image: Jean10, 
       name: 'Selvedge Denim Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Premium selvedge denim for denim enthusiasts',
       category: 'Jeans' 
     },
@@ -130,7 +130,7 @@ const Jeans = () => {
       id: 109, 
       image: Jean11, 
       name: 'Super Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Super comfortable jeans for all-day wear',
       category: 'Jeans' 
     },
@@ -138,7 +138,7 @@ const Jeans = () => {
       id: 110, 
       image: Jean12, 
       name: 'Stretch Skinny Fit Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Skinny fit jeans with stretch for comfort',
       category: 'Jeans' 
     },
@@ -146,7 +146,7 @@ const Jeans = () => {
       id: 111, 
       image: Jean13, 
       name: 'Mid Wash Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Medium wash jeans for a casual look',
       category: 'Jeans' 
     },
@@ -154,7 +154,7 @@ const Jeans = () => {
       id: 112, 
       image: Jean14, 
       name: 'Slim Fit Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Slim fit design for a modern silhouette',
       category: 'Jeans' 
     },
@@ -170,7 +170,7 @@ const Jeans = () => {
       id: 114, 
       image: Jean16, 
       name: 'Dark Blue Jean', 
-      price: 2000, 
+      price: 1850, 
       description: '🌟 Dark blue jeans for a sophisticated look',
       category: 'Jeans' 
     },

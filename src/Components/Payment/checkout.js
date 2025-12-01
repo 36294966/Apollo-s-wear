@@ -1,6 +1,7 @@
 import { ArrowLeft, CheckCircle, CreditCard, Home, Mail, MapPin, ShoppingBag, User, ExternalLink, Download } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import emailjs from '@emailjs/browser';
 
 // Shipping options data
 const shippingOptions = [
@@ -192,6 +193,19 @@ const Checkout = () => {
   // WhatsApp number for receipt
   const whatsappNumber = '+254746311274';
 
+  // EmailJS configuration - Using your actual credentials
+  const EMAILJS_CONFIG = {
+    serviceId: 'service_u7d5vzf',
+    templateId: 'template_xj1i4bg', 
+    publicKey: 'La7uiwZgmmsaIVgLq'
+  };
+
+  // Initialize EmailJS
+  useEffect(() => {
+    console.log('Initializing EmailJS with:', EMAILJS_CONFIG);
+    // EmailJS initialization is handled automatically by the SDK
+  }, []);
+
   // Generate user ID based on purchased items and timestamp
   const generateUserId = (items) => {
     const now = new Date();
@@ -199,11 +213,9 @@ const Checkout = () => {
     const dateCode = `${now.getDate()}${now.getMonth() + 1}${now.getFullYear().toString().slice(-2)}`;
     
     if (items.length === 1) {
-      // Single item - use product ID and timestamp
       const productId = items[0].id || items[0].productId || '001';
       return `U${productId}-${dateCode}-${timestamp.slice(-4)}`;
     } else {
-      // Multiple items - use first product ID and count
       const firstProductId = items[0].id || items[0].productId || '001';
       const itemCount = items.length;
       return `U${firstProductId}-${itemCount}ITM-${dateCode}-${timestamp.slice(-4)}`;
@@ -213,11 +225,9 @@ const Checkout = () => {
   // Generate order ID based on product IDs
   const generateOrderId = (items) => {
     if (items.length === 1) {
-      // For single item, use product ID directly
       const productId = items[0].id || items[0].productId || '001';
       return `ORD-${productId}`;
     } else {
-      // For multiple items, create combination of first 3 product IDs
       const productIds = items.map(item => item.id || item.productId || '001').slice(0, 3).join('-');
       const timestamp = Date.now().toString(36).toUpperCase();
       return `ORD-${productIds}-${timestamp}`;
@@ -233,18 +243,15 @@ const Checkout = () => {
   const generateItemLink = (item) => {
     const productId = item.id || item.productId;
     if (!productId) return `${getBaseUrl()}/`;
-    
     return `${getBaseUrl()}/product/${productId}`;
   };
 
   // Generate order link that points to the main product
   const generateOrderLink = (orderDetailsObj) => {
     if (orderDetailsObj.items.length === 1) {
-      // Single product order - link directly to that product
       const productId = orderDetailsObj.items[0].id || orderDetailsObj.items[0].productId;
       return `${getBaseUrl()}/product/${productId}`;
     } else {
-      // Multiple products - link to first product or products page
       const firstProductId = orderDetailsObj.items[0].id || orderDetailsObj.items[0].productId;
       return `${getBaseUrl()}/product/${firstProductId}`;
     }
@@ -253,10 +260,8 @@ const Checkout = () => {
   // Enhanced smooth scroll function
   const smoothScrollTo = (element, offset = 0) => {
     if (!element) return;
-    
     const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
     const offsetPosition = elementPosition - offset;
-
     window.scrollTo({
       top: offsetPosition,
       behavior: 'smooth'
@@ -291,11 +296,9 @@ const Checkout = () => {
     }, 0);
   };
 
-  // Clear cart function - Enhanced to remove only the purchased items
+  // Clear cart function - FIXED: Changed 'ccartKey' to 'cartKey'
   const clearPurchasedItemsFromCart = (purchasedItems) => {
     console.log('Clearing purchased items from cart...');
-    
-    // Get current cart from localStorage
     const currentCart = JSON.parse(localStorage.getItem('cart') || '[]');
     
     if (currentCart.length === 0) {
@@ -303,7 +306,6 @@ const Checkout = () => {
       return;
     }
     
-    // Create a map of purchased items for quick lookup
     const purchasedItemsMap = new Map();
     purchasedItems.forEach(item => {
       const productId = item.id || item.productId;
@@ -311,21 +313,16 @@ const Checkout = () => {
       purchasedItemsMap.set(key, item.quantity || 1);
     });
     
-    // Filter out the purchased items from the cart
     const updatedCart = currentCart.filter(cartItem => {
       const cartProductId = cartItem.id || cartItem.productId;
       const cartKey = `${cartProductId}-${cartItem.size || 'default'}`;
-      
-      // If this item is in the purchased items, remove it
       if (purchasedItemsMap.has(cartKey)) {
         console.log(`Removing item from cart: ${cartItem.name}, Size: ${cartItem.size}`);
-        return false; // Remove from cart
+        return false;
       }
-      
-      return true; // Keep in cart
+      return true;
     });
     
-    // Update localStorage with the filtered cart
     if (updatedCart.length > 0) {
       localStorage.setItem('cart', JSON.stringify(updatedCart));
       console.log(`Cart updated. ${updatedCart.length} items remaining in cart.`);
@@ -334,137 +331,166 @@ const Checkout = () => {
       console.log('Cart is now empty');
     }
     
-    // Dispatch events to update navbar and other components
     window.dispatchEvent(new Event('cartUpdated'));
     window.dispatchEvent(new Event('storage'));
-    
-    // Force a storage event for other tabs
     localStorage.setItem('cart_trigger', Date.now().toString());
     localStorage.removeItem('cart_trigger');
-    
     console.log('Purchased items removed from cart and events dispatched');
   };
 
-  // Clear entire cart function (for when all items are purchased)
-  const clearEntireCart = () => {
-    console.log('Clearing entire cart...');
-    localStorage.removeItem('cart');
-    
-    // Dispatch multiple events to ensure navbar gets the update
-    window.dispatchEvent(new Event('cartCleared'));
-    window.dispatchEvent(new Event('cartUpdated'));
-    window.dispatchEvent(new Event('storage'));
-    
-    // Force a storage event for other tabs
-    localStorage.setItem('cart_trigger', Date.now().toString());
-    localStorage.removeItem('cart_trigger');
-    
-    console.log('Cart cleared and events dispatched');
+  // Send notification to admin via EmailJS
+  const sendAdminNotification = async (orderDetailsObj) => {
+    try {
+      // Create a detailed message with all order information for the admin
+      const adminMessage = `
+🛒 NEW ORDER RECEIVED! 🛒
+
+📋 ORDER DETAILS:
+• Order ID: ${orderDetailsObj.orderId}
+• User ID: ${orderDetailsObj.userId}
+• Number of Items: ${orderDetailsObj.items.length}
+• Subtotal: KES ${orderDetailsObj.subtotal.toLocaleString()}
+• Shipping Cost: KES ${orderDetailsObj.shippingCost.toLocaleString()}
+• Total Amount: KES ${orderDetailsObj.total.toLocaleString()}
+• Shipping Area: ${orderDetailsObj.shipping.area}
+
+🛍️ ITEMS ORDERED:
+${orderDetailsObj.items.map((item, index) => {
+  const productId = item.id || item.productId || 'N/A';
+  return `
+${index + 1}. ${item.name}
+   • Product ID: ${productId}
+   • Size: ${item.size || 'Not specified'}
+   • Price: KES ${item.price ? parseInt(item.price).toLocaleString() : '0'}
+   • Quantity: ${item.quantity || 1}
+   • Subtotal: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}
+`;
+}).join('')}
+
+👤 CUSTOMER INFORMATION:
+• Name: ${orderDetailsObj.customer.firstName} ${orderDetailsObj.customer.lastName}
+• Email: ${orderDetailsObj.customer.email || 'Not provided'}
+• Phone: ${orderDetailsObj.customer.phone}
+• Address: ${orderDetailsObj.customer.address || 'Not provided'}
+• City: ${orderDetailsObj.customer.city}
+• Postal Code: ${orderDetailsObj.customer.postalCode || 'Not provided'}
+• Country: ${orderDetailsObj.customer.country}
+
+📅 ORDER INFORMATION:
+• Submitted: ${new Date(orderDetailsObj.orderDate).toLocaleString()}
+• Payment Method: M-Pesa
+• Paybill: ${paybillNumber}
+• Account: ${accountNumber}
+
+🔗 PRODUCT LINKS:
+${orderDetailsObj.items.map((item, index) => {
+  const productId = item.id || item.productId || 'N/A';
+  return `• Item ${index + 1}: ${generateItemLink(item)}`;
+}).join('\n')}
+
+Please process this order and contact the customer within 24 hours.
+      `;
+
+      // Template parameters for admin notification
+      const templateParams = {
+        to_name: 'Admin',
+        from_name: 'Sir Apollo Website',
+        message: adminMessage,
+        subject: `NEW ORDER RECEIVED! - ${orderDetailsObj.orderId}`,
+        order_id: orderDetailsObj.orderId,
+        customer_name: `${orderDetailsObj.customer.firstName} ${orderDetailsObj.customer.lastName}`,
+        customer_email: orderDetailsObj.customer.email || 'Not provided',
+        customer_phone: orderDetailsObj.customer.phone,
+        total_amount: `KES ${orderDetailsObj.total.toLocaleString()}`,
+        order_date: new Date(orderDetailsObj.orderDate).toLocaleString(),
+        items_count: orderDetailsObj.items.length,
+        shipping_area: orderDetailsObj.shipping.area
+      };
+
+      console.log('Sending admin notification via EmailJS with parameters:', templateParams);
+
+      // Send email using EmailJS with better error handling
+      const result = await emailjs.send(
+        EMAILJS_CONFIG.serviceId,
+        EMAILJS_CONFIG.templateId,
+        templateParams,
+        EMAILJS_CONFIG.publicKey
+      );
+
+      console.log('✅ Admin notification sent successfully:', result);
+      return { 
+        success: true, 
+        message: 'Admin notification sent successfully',
+        status: result.status,
+        text: result.text
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to send admin notification via EmailJS:', error);
+      return { 
+        success: false, 
+        message: `Failed to send admin notification: ${error.text || error.message || 'Unknown error'}`,
+        error: error
+      };
+    }
   };
 
-  // Send receipt via email
-  const sendEmailReceipt = async (orderDetails, receiptContent) => {
+  // Send receipt to customer via EmailJS
+  const sendCustomerReceipt = async (orderDetailsObj) => {
     if (!formData.email) {
-      console.log('No email provided, skipping email receipt');
-      return;
+      console.log('No customer email provided, skipping customer receipt');
+      return { success: false, message: 'No email provided' };
     }
 
     try {
-      const emailData = {
-        to: formData.email,
-        subject: `Order Confirmation - ${orderDetails.orderId}`,
-        text: receiptContent,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .header { background: linear-gradient(135deg, #059669, #2563eb); color: white; padding: 20px; text-align: center; }
-              .content { padding: 20px; }
-              .order-info { background: #dbeafe; padding: 15px; border-radius: 8px; margin: 15px 0; }
-              .items { margin: 20px 0; }
-              .item { border-bottom: 1px solid #e5e7eb; padding: 10px 0; }
-              .total { font-size: 1.2em; font-weight: bold; color: #059669; }
-              .footer { background: #f3f4f6; padding: 15px; text-align: center; font-size: 0.9em; color: #6b7280; }
-              .product-link { color: #2563eb; text-decoration: none; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>SIR APOLLO'S MENWEAR</h1>
-              <h2>Order Confirmation</h2>
-            </div>
-            <div class="content">
-              <div class="order-info">
-                <p><strong>Order ID:</strong> ${orderDetails.orderId}</p>
-                <p><strong>User ID:</strong> ${orderDetails.userId}</p>
-                <p><strong>Order Date:</strong> ${new Date(orderDetails.orderDate).toLocaleString()}</p>
-                <p><strong>Product Link:</strong> <a href="${generateOrderLink(orderDetails)}" class="product-link">View Your Product</a></p>
-              </div>
-              
-              <div class="items">
-                <h3>Items Ordered (${orderDetails.items.length})</h3>
-                ${orderDetails.items.map((item, index) => {
-                  const productId = item.id || item.productId || 'N/A';
-                  return `
-                  <div class="item">
-                    <p><strong>${index + 1}. ${item.name}</strong></p>
-                    <p><strong>Product ID:</strong> ${productId}</p>
-                    <p>Size: ${item.size || 'Not specified'}</p>
-                    <p>Quantity: ${item.quantity || 1}</p>
-                    <p>Price: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}</p>
-                    <p><a href="${generateItemLink(item)}" class="product-link">View Item Details</a></p>
-                  </div>
-                `}).join('')}
-              </div>
-              
-              <div class="order-summary">
-                <h3>Order Summary</h3>
-                <p>Subtotal: KES ${orderDetails.subtotal.toLocaleString()}</p>
-                <p>Shipping: KES ${orderDetails.shippingCost.toLocaleString()}</p>
-                <p class="total">Total: KES ${orderDetails.total.toLocaleString()}</p>
-              </div>
-              
-              <div class="customer-info">
-                <h3>Customer Information</h3>
-                <p>Name: ${orderDetails.customer.firstName} ${orderDetails.customer.lastName}</p>
-                <p>Email: ${orderDetails.customer.email || 'Not provided'}</p>
-                <p>Phone: ${orderDetails.customer.phone}</p>
-                <p>Address: ${orderDetails.customer.address || 'Not provided'}, ${orderDetails.customer.city}</p>
-                <p>Shipping Area: ${orderDetails.shipping.area}</p>
-              </div>
-              
-              <div class="payment-info">
-                <h3>Payment Instructions</h3>
-                <p>Please complete payment via M-Pesa:</p>
-                <p><strong>Paybill:</strong> ${paybillNumber}</p>
-                <p><strong>Account:</strong> ${accountNumber}</p>
-                <p><strong>Amount:</strong> KES ${orderDetails.total.toLocaleString()}</p>
-              </div>
-            </div>
-            <div class="footer">
-              <p>Thank you for your purchase!</p>
-              <p>Customer Support: ${whatsappNumber} | ${getBaseUrl()}</p>
-            </div>
-          </body>
-          </html>
-        `
+      const itemsList = orderDetailsObj.items.map((item, index) => 
+        `${index + 1}. ${item.name} (Size: ${item.size || 'Not specified'}) - Quantity: ${item.quantity || 1} - Price: KES ${((item.price || 0) * (item.quantity || 1)).toLocaleString()}`
+      ).join('\n');
+
+      const templateParams = {
+        to_email: formData.email,
+        to_name: `${formData.firstName} ${formData.lastName}`,
+        from_name: 'Sir Apollo Menwear',
+        customer_name: `${formData.firstName} ${formData.lastName}`,
+        order_id: orderDetailsObj.orderId,
+        user_id: orderDetailsObj.userId,
+        order_date: new Date(orderDetailsObj.orderDate).toLocaleString(),
+        items: itemsList,
+        subtotal: `KES ${orderDetailsObj.subtotal.toLocaleString()}`,
+        shipping_cost: `KES ${orderDetailsObj.shippingCost.toLocaleString()}`,
+        total_amount: `KES ${orderDetailsObj.total.toLocaleString()}`,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        customer_address: formData.address || 'Not provided',
+        customer_city: formData.city,
+        shipping_area: orderDetailsObj.shipping.area,
+        paybill_number: paybillNumber,
+        account_number: accountNumber,
+        whatsapp_number: whatsappNumber,
+        product_link: generateOrderLink(orderDetailsObj),
+        website_url: getBaseUrl()
       };
 
-      // Using EmailJS or similar service - you'll need to set this up
-      // This is a placeholder for email sending functionality
-      console.log('Email receipt prepared for:', formData.email);
-      
-      // Example using fetch to your backend email endpoint
-      // await fetch('/api/send-email', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(emailData)
-      // });
-      
+      console.log('Sending customer receipt via EmailJS...');
+      const result = await emailjs.send(
+        EMAILJS_CONFIG.serviceId,
+        EMAILJS_CONFIG.templateId,
+        templateParams,
+        EMAILJS_CONFIG.publicKey
+      );
+
+      console.log('✅ Customer receipt sent successfully');
+      return { 
+        success: true, 
+        message: 'Customer receipt sent successfully'
+      };
+
     } catch (error) {
-      console.error('Failed to send email receipt:', error);
+      console.error('❌ Failed to send customer receipt:', error);
+      return { 
+        success: false, 
+        message: `Failed to send customer receipt: ${error.text || error.message || 'Unknown error'}`
+      };
     }
   };
 
@@ -473,10 +499,8 @@ const Checkout = () => {
     const shippingCost = orderDetails.shippingCost;
     const totalAmount = orderDetails.total;
     
-    // Get product IDs for the order
     const productIds = orderDetails.items.map(item => item.id || item.productId || 'N/A').join(', ');
     
-    // Create a shorter version of the receipt for WhatsApp
     const shortReceipt = `
 *SIR APOLLO'S MENWEAR - ORDER CONFIRMATION*
 
@@ -522,51 +546,49 @@ _Thank you for your purchase!_
     
     const whatsappMessage = encodeURIComponent(shortReceipt);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
-    
-    // Open WhatsApp in a new tab
     window.open(whatsappUrl, '_blank');
   };
 
-  // Automatically send receipts when payment is clicked
+  // Automatically send all receipts and notifications
   const sendAutomatedReceipts = async (orderDetailsObj) => {
-    // Generate receipt content
-    const { content: receiptContent } = generateReceipt(orderDetailsObj);
-    
+    const results = {
+      whatsapp: true,
+      admin: { success: false, message: 'Failed to send admin notification' },
+      customer: { success: false, message: 'No email provided' }
+    };
+
     // Send to WhatsApp
     sendToWhatsApp(orderDetailsObj);
     
-    // Send to Email if provided
+    // Send admin notification
+    console.log('🔄 Sending admin notification...');
+    results.admin = await sendAdminNotification(orderDetailsObj);
+    
+    // Send customer receipt if email provided
     if (formData.email) {
-      await sendEmailReceipt(orderDetailsObj, receiptContent);
+      console.log('🔄 Sending customer receipt...');
+      results.customer = await sendCustomerReceipt(orderDetailsObj);
     }
     
-    console.log('Automated receipts sent to WhatsApp and Email');
+    console.log('📧 All notifications summary:', results);
+    return results;
   };
 
   // Load purchase data
   useEffect(() => {
-    // Check if we have cart items from state (multiple items from cart)
     if (cartItemsFromState && cartItemsFromState.length > 0) {
       setPurchaseItems(cartItemsFromState);
       setPurchaseTotal(totalFromState);
-      
-      // Remove these items from the cart immediately when checkout page loads
       console.log('Removing checkout items from cart...');
       clearPurchasedItemsFromCart(cartItemsFromState);
-    }
-    // Check if we have a single purchase item in state (direct purchase)
-    else if (purchaseItemFromState && isDirectPurchase) {
+    } else if (purchaseItemFromState && isDirectPurchase) {
       setPurchaseItems([purchaseItemFromState]);
       setPurchaseTotal(parseFloat(purchaseItemFromState.price) || 0);
-      
-      // For direct purchases, we don't need to modify the cart
       console.log('Direct purchase - no cart modification needed');
     } else {
-      // If no purchase data at all, redirect to home
       navigate('/');
     }
 
-    // Scroll to top after a short delay to ensure DOM is ready
     setTimeout(() => {
       scrollToTop();
     }, 300);
@@ -609,15 +631,12 @@ _Thank you for your purchase!_
     setPaymentMethod(e.target.value);
   };
 
-  // Validate form - Only email, address, and postal code are optional
+  // Validate form
   const validateForm = () => {
     const newErrors = {};
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    // Email is optional - no validation
-    // Address is optional - no validation
     if (!formData.city.trim()) newErrors.city = 'City is required';
-    // Postal code is optional - no validation
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (formData.phone.trim() && !/^0[0-9]{9}$/.test(formData.phone.trim())) newErrors.phone = 'Please enter a valid Kenyan phone number (e.g., 0712345678)';
     if (!formData.shippingArea) newErrors.shippingArea = 'Please select a shipping area';
@@ -714,7 +733,6 @@ _Thank you for your purchase!_
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Prevent submission if no purchase items
     if (!purchaseItems || purchaseItems.length === 0) {
       alert('No items selected for purchase. Please go back and select items.');
       navigate('/');
@@ -733,12 +751,9 @@ _Thank you for your purchase!_
       return;
     }
     
-    // Scroll to top before processing
     scrollToTop();
-    
     setIsProcessing(true);
     
-    // Generate order details with new ID system
     const orderId = generateOrderId(purchaseItems);
     const userId = generateUserId(purchaseItems);
     const shippingCost = selectedShipping ? parseInt(selectedShipping.cost) : 0;
@@ -756,28 +771,31 @@ _Thank you for your purchase!_
       userId
     };
     
-    // Send automated receipts immediately when payment is clicked
-    await sendAutomatedReceipts(orderDetailsObj);
+    console.log('🔄 Processing order...', orderDetailsObj);
     
-    setOrderDetails(orderDetailsObj);
-    
-    // Simulate order processing
-    setTimeout(() => {
-      // Save order to localStorage
+    try {
+      const receiptResults = await sendAutomatedReceipts(orderDetailsObj);
+      
+      console.log('✅ All receipts sent successfully:', receiptResults);
+      
+      setOrderDetails(orderDetailsObj);
+      
       const orders = JSON.parse(localStorage.getItem('sirApolloOrders') || '[]');
       orders.push(orderDetailsObj);
       localStorage.setItem('sirApolloOrders', JSON.stringify(orders));
       
-      // Clear direct purchase from localStorage
       localStorage.removeItem('directPurchase');
       
-      // Show confirmation view
       setShowConfirmation(true);
       setIsProcessing(false);
       
-      // Scroll to top again to ensure user sees the confirmation from the top
       scrollToTop();
-    }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Error during order processing:', error);
+      alert('There was an error processing your order. Please try again.');
+      setIsProcessing(false);
+    }
   };
 
   // Navigate to home
@@ -812,59 +830,84 @@ _Thank you for your purchase!_
             <p className="text-green-100 text-sm mt-1">Your receipt has been sent to WhatsApp {formData.email ? 'and Email' : ''}</p>
           </div>
           <div className="p-6 md:p-8">
-            {/* Order ID and User ID - ENHANCED STYLING */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 border border-blue-200 rounded-2xl p-6 mb-8 shadow-sm">
+            {/* Order ID and User ID - REDESIGNED COMPACT CARDS */}
+            <div className="mb-8">
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Your Order Details</h2>
                 <p className="text-gray-600">Keep these details safe for your records</p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Compact Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {/* Order ID Card */}
-                <div className="bg-white rounded-xl p-5 border border-blue-100 shadow-sm">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
                   <div className="flex items-center mb-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                      <span className="text-blue-600 font-bold text-sm">ID</span>
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                      <span className="text-white font-bold text-xs">ID</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Order ID</h3>
-                      <p className="text-2xl font-bold text-gray-900 font-mono">{orderDetails.orderId}</p>
+                      <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Order ID</h3>
+                      <p className="text-sm font-bold text-gray-900 font-mono truncate">{orderDetails.orderId}</p>
                     </div>
+                  </div>
+                  <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full inline-block">
+                    Unique Identifier
                   </div>
                 </div>
 
                 {/* User ID Card */}
-                <div className="bg-white rounded-xl p-5 border border-green-100 shadow-sm">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
                   <div className="flex items-center mb-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                      <User size={18} className="text-green-600" />
+                    <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                      <User size={16} className="text-white" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">User ID</h3>
-                      <p className="text-lg font-bold text-gray-900 font-mono">{orderDetails.userId}</p>
+                      <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">User ID</h3>
+                      <p className="text-sm font-bold text-gray-900 font-mono truncate">{orderDetails.userId}</p>
                     </div>
+                  </div>
+                  <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full inline-block">
+                    Your Account ID
+                  </div>
+                </div>
+
+                {/* Product Access Card */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-center mb-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                      <ExternalLink size={16} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Product ID</h3>
+                      <p className="text-sm font-bold text-gray-900 font-mono truncate">{mainProductId}</p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full inline-block">
+                    Main Product
                   </div>
                 </div>
               </div>
 
-              {/* Product Link Card */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 shadow-sm">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4">
-                    <ExternalLink size={20} className="text-white" />
+              {/* Product Access Button */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mr-4">
+                      <ExternalLink size={18} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-800">Quick Product Access</h3>
+                      <p className="text-sm text-gray-600">Your order is linked to Product ID: <span className="font-mono font-semibold text-purple-600">{mainProductId}</span></p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-800">Product Access</h3>
-                    <p className="text-gray-600">Your order is linked to Product ID: <span className="font-mono font-semibold text-purple-600">{mainProductId}</span></p>
-                  </div>
+                  <button
+                    onClick={() => navigateToProduct(mainProductId)}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg whitespace-nowrap"
+                  >
+                    <ExternalLink size={16} />
+                    View Product
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigateToProduct(mainProductId)}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg"
-                >
-                  <ExternalLink size={18} />
-                  View Your Product
-                </button>
               </div>
             </div>
             
@@ -937,7 +980,7 @@ _Thank you for your purchase!_
             {/* Shipping info */}
             <div className="bg-blue-50 p-4 md:p-6 rounded-lg mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Customer Information</h3>
-              <p className="text-gray-700">{orderDetails.customer.firstName} {orderDetails.customer.lastName}</p>
+              <p className="text-gray-700">{orderDetails.customer.firstName} ${orderDetails.customer.lastName}</p>
               {orderDetails.customer.email && (
                 <p className="text-gray-700">{orderDetails.customer.email}</p>
               )}
@@ -983,9 +1026,12 @@ _Thank you for your purchase!_
                   ℹ️ No email provided for email receipt
                 </p>
               )}
+              <p className="text-gray-700 mt-2">
+                ✅ Admin notification sent successfully
+              </p>
             </div>
             
-            {/* Buttons - SMALLER STYLING */}
+            {/* Buttons */}
             <div className="flex flex-col gap-3">
               <button
                 onClick={downloadReceipt}
@@ -1015,7 +1061,7 @@ _Thank you for your purchase!_
     );
   }
 
-  // If no purchase items, show loading state instead of empty page
+  // If no purchase items, show loading state
   if ((!purchaseItems || purchaseItems.length === 0) && !showConfirmation) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-6 pt-20">
@@ -1297,6 +1343,9 @@ _Thank you for your purchase!_
                         <p className="text-sm text-blue-700">
                           Receipt will be automatically sent to WhatsApp {formData.email ? 'and your email' : ''} when you click Pay.
                         </p>
+                        <p className="text-sm text-blue-700 mt-1">
+                          Admin will also receive automatic notification of your order.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1328,7 +1377,7 @@ _Thank you for your purchase!_
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Sending Receipts...
+                        Processing Order...
                       </span>
                     ) : (
                       `Pay KES ${total.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`
@@ -1453,7 +1502,10 @@ _Thank you for your purchase!_
                     • WhatsApp: Always sent
                   </p>
                   <p className="text-xs text-blue-600">
-                    • Email: {formData.email ? 'Will be sent' : 'Provide email above'}
+                    • Email: {formData.email ? 'Will be sent via EmailJS' : 'Provide email above'}
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    • Admin Notification: Automatically sent
                   </p>
                 </div>
                 

@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import Cassual1 from '../../Assests/Cassual/cassual1.jpg';
 import Cassual2 from '../../Assests/Cassual/cassual2.jpg';
 import Cassual3 from '../../Assests/Cassual/cassual3.jpg';
+import Cassual4 from '../../Assests/Cassual/cassual4.jpg';
+import Cassual5 from '../../Assests/Cassual/cassual5.jpg';
+import Cassual6 from '../../Assests/Cassual/cassual6.jpg';
 
 const Cassual = () => {
   const navigate = useNavigate();
@@ -36,31 +39,58 @@ const Cassual = () => {
   // Casual shirts data matching the IDs from your ProductDetail component
   const casualShirts = [
     {
-      id: 102,
+      id: 93,
       name: 'Urban Streetwear Shirt ⭐⭐⭐⭐⭐',
       image: Cassual1,
-      price: 2000,
+      price: 1250,
       description: '🔥 Trendy urban streetwear shirt for casual occasions',
       category: 'casual',
       colors: ['Black', 'Navy', 'Gray']
     },
     {
-      id: 103,
+      id: 94,
       name: 'Designer Denim Casual ⭐⭐⭐⭐⭐',
       image: Cassual2,
-      price: 2000,
+      price: 1250,
       description: '🔥 Premium designer denim shirt for a stylish look',
       category: 'casual', 
       colors: ['Blue', 'Light Blue', 'Black']
     },
     {
-      id: 104,
+      id: 95,
       name: 'Premium Linen Blend ⭐⭐⭐⭐⭐',
       image: Cassual3,
-      price: 2000,
+      price: 1250,
       description: '🔥 Comfortable linen blend shirt perfect for casual wear',
       category: 'casual',
       colors: ['White', 'Beige', 'Light Gray']
+    },
+    {
+      id: 96,
+      name: 'Classic Cotton Casual ⭐⭐⭐⭐⭐',
+      image: Cassual4,
+      price: 1250,
+      description: '🔥 Classic cotton casual shirt for everyday comfort',
+      category: 'casual',
+      colors: ['White', 'Blue', 'Gray']
+    },
+    {
+      id: 97,
+      name: 'Modern Pattern Shirt ⭐⭐⭐⭐⭐',
+      image: Cassual5,
+      price: 1250,
+      description: '🔥 Modern patterned shirt for a contemporary look',
+      category: 'casual',
+      colors: ['Multi-color', 'Blue', 'Black']
+    },
+    {
+      id: 98,
+      name: 'Elegant Casual Wear ⭐⭐⭐⭐⭐',
+      image: Cassual6,
+      price: 1250,
+      description: '🔥 Elegant casual shirt perfect for smart-casual occasions',
+      category: 'casual',
+      colors: ['Navy', 'White', 'Burgundy']
     }
   ];
 
@@ -238,7 +268,7 @@ const Cassual = () => {
                     <span className="font-bold">Ksh {cartTotal().toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between mb-2 text-sm">
-                    <span className ='font-semibold'>Shipping:</span>
+                    <span className='font-semibold'>Shipping:</span>
                     <span className="font-bold">Ksh 200</span>
                   </div>
                   <div className="flex justify-between mb-3 text-base">
@@ -268,7 +298,7 @@ const Cassual = () => {
       </div>
 
       {/* Shirt Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
         {casualShirts.map((shirt) => (
           <div
             key={shirt.id}

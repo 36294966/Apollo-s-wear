@@ -353,12 +353,12 @@ const Home = () => {
   ];
 
   const poloShirts = [
-    { id: 93, name: 'The Executive Polo ⭐⭐⭐⭐⭐', image: Cassual1, price: 1800, category: 'shirt' },
-    { id: 94, name: 'Premium Cotton Classic ⭐⭐⭐⭐⭐', image: Cassual2, price: 1800, category: 'shirt' },
-    { id: 95, name: 'Modern Fit Performance Polo ⭐⭐⭐⭐⭐', image: Cassual3, price: 1800, category: 'shirt' },
-    { id: 96, name: 'Athletic Fit Performance Polo ⭐⭐⭐⭐⭐', image: Cassual4, price: 1800, category: 'shirt' },
-    { id: 97, name: 'Boutique Collection Polo ⭐⭐⭐⭐⭐', image: Cassual5, price: 1800, category: 'shirt' },
-    { id: 98, name: 'Essential Everyday Polo ⭐⭐⭐⭐⭐', image: Cassual6, price: 1800, category: 'shirt' },
+    { id: 93, name: 'The Executive Polo ⭐⭐⭐⭐⭐', image: Cassual1, price: 1250, category: 'shirt' },
+    { id: 94, name: 'Premium Cotton Classic ⭐⭐⭐⭐⭐', image: Cassual2, price: 1250, category: 'shirt' },
+    { id: 95, name: 'Modern Fit Performance Polo ⭐⭐⭐⭐⭐', image: Cassual3, price: 1250, category: 'shirt' },
+    { id: 96, name: 'Athletic Fit Performance Polo ⭐⭐⭐⭐⭐', image: Cassual4, price: 1250, category: 'shirt' },
+    { id: 97, name: 'Boutique Collection Polo ⭐⭐⭐⭐⭐', image: Cassual5, price: 1250, category: 'shirt' },
+    { id: 98, name: 'Essential Everyday Polo ⭐⭐⭐⭐⭐', image: Cassual6, price: 1250, category: 'shirt' },
   ];
 
   const jeans = [
